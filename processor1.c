@@ -51,25 +51,29 @@ char* find_match(char* partNumber) {
 	char buffer[MAX_LINE_LEN];
 	to_upper_trim(partNumber, buffer, sizeof(buffer));
 
-	if (strlen(buffer) < 3) {
+	size_t bufferLen = strlen(buffer);
+	if (bufferLen < 3) {
 		return NULL;
 	}
 
 	for (size_t i = 0; i < masterPartsCount; i++) {
-		if (is_suffix(buffer, masterPartsAsc[i].PartNumber)) {
-			return masterPartsAsc[i].PartNumber;
+		MasterPart mp = masterPartsAsc[i];
+		if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumber, strlen(mp.PartNumber))) {
+			return mp.PartNumber;
 		}
 	}
 
 	for (size_t i = 0; i < masterPartsCount; i++) {
-		if (is_suffix(buffer, masterPartsAscByNoHyphens[i].PartNumberNoHyphens)) {
-			return masterPartsAscByNoHyphens[i].PartNumber;
+		MasterPart mp = masterPartsAscByNoHyphens[i];
+		if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumberNoHyphens, strlen(mp.PartNumberNoHyphens))) {
+			return mp.PartNumber;
 		}
 	}
 
 	for (size_t i = 0; i < masterPartsCount; i++) {
-		if (is_suffix(masterPartsDesc[i].PartNumber, buffer)) {
-			return masterPartsDesc[i].PartNumber;
+		MasterPart mp = masterPartsDesc[i];
+		if (is_suffix_vectorized(mp.PartNumber, strlen(mp.PartNumber), buffer, bufferLen)) {
+			return mp.PartNumber;
 		}
 	}
 

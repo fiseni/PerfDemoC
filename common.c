@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <emmintrin.h>
 #include "common.h"
 #include "processor.h"
 
@@ -9,18 +10,14 @@
 #define strdup _strdup
 #endif
 
-void print_array(char* array[], size_t size)
-{
-	for (size_t i = 0; i < size; i++)
-	{
+void print_array(char* array[], size_t size) {
+	for (size_t i = 0; i < size; i++) {
 		printf("%s\n", array[i]);
 	}
 }
 
-void print_masterParts(MasterPart* masterParts, size_t masterPartsCount)
-{
-	for (size_t i = 0; i < masterPartsCount; i++)
-	{
+void print_masterParts(MasterPart* masterParts, size_t masterPartsCount) {
+	for (size_t i = 0; i < masterPartsCount; i++) {
 		printf("%s\n", masterParts[i].PartNumber);
 		printf("%s\n", masterParts[i].PartNumberNoHyphens);
 	}
@@ -28,8 +25,7 @@ void print_masterParts(MasterPart* masterParts, size_t masterPartsCount)
 	printf("#################################\n");
 }
 
-int compare_partNumber_length(const void* a, const void* b)
-{
+int compare_partNumber_length(const void* a, const void* b) {
 	const MasterPart* mpA = (const MasterPart*)a;
 	const MasterPart* mpB = (const MasterPart*)b;
 
@@ -40,8 +36,7 @@ int compare_partNumber_length(const void* a, const void* b)
 	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
-int compare_partNumber_length_desc(const void* a, const void* b)
-{
+int compare_partNumber_length_desc(const void* a, const void* b) {
 	const MasterPart* mpA = (const MasterPart*)a;
 	const MasterPart* mpB = (const MasterPart*)b;
 
@@ -52,8 +47,7 @@ int compare_partNumber_length_desc(const void* a, const void* b)
 	return lenA < lenB ? 1 : lenA > lenB ? -1 : 0;
 }
 
-int compare_partNumberNoHyphens_length(const void* a, const void* b)
-{
+int compare_partNumberNoHyphens_length(const void* a, const void* b) {
 	const MasterPart* mpA = (const MasterPart*)a;
 	const MasterPart* mpB = (const MasterPart*)b;
 
@@ -63,8 +57,7 @@ int compare_partNumberNoHyphens_length(const void* a, const void* b)
 	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
-void to_upper_trim(char* src, char* buffer, size_t bufferSize)
-{
+void to_upper_trim(char* src, char* buffer, size_t bufferSize) {
 	if (src == NULL || buffer == NULL || bufferSize == 0) {
 		return;
 	}
@@ -80,8 +73,7 @@ void to_upper_trim(char* src, char* buffer, size_t bufferSize)
 	buffer[j] = '\0';
 }
 
-void remove_char(char* src, char* buffer, size_t bufferSize, char find)
-{
+void remove_char(char* src, char* buffer, size_t bufferSize, char find) {
 	if (src == NULL || buffer == NULL || bufferSize == 0) {
 		return;
 	}
@@ -97,20 +89,56 @@ void remove_char(char* src, char* buffer, size_t bufferSize, char find)
 	buffer[j] = '\0';
 }
 
-bool is_suffix(const char* value, const char* source)
-{
-	size_t lenValue = strlen(value);
-	size_t lenSource = strlen(source);
+static int vectorized_strcmp_same_length(const char* s1, const char* s2, size_t length) {
+	size_t i = 0;
 
+	// Process 16 bytes at a time using SSE2
+	for (; i + 15 < length; i += 16) {
+		// Load 16 bytes from each string
+		__m128i chunk1 = _mm_loadu_si128((const __m128i*)(s1 + i));
+		__m128i chunk2 = _mm_loadu_si128((const __m128i*)(s2 + i));
+
+		// Compare the two chunks
+		__m128i cmp = _mm_cmpeq_epi8(chunk1, chunk2);
+
+		// Create a mask from the comparison
+		int mask = _mm_movemask_epi8(cmp);
+
+		// If mask is not all ones, there's a difference
+		if (mask != 0xFFFF) {
+			return 1;  // Strings differ
+		}
+	}
+
+	// Compare any remaining bytes
+	for (; i < length; i++) {
+		if (s1[i] != s2[i]) {
+			return 1;  // Strings differ
+		}
+	}
+
+	return 0;  // Strings are equal
+}
+
+bool is_suffix(const char* value, size_t lenValue, const char* source, size_t lenSource) {
 	if (lenValue > lenSource) {
 		return false;
 	}
 	const char* endOfSource = source + (lenSource - lenValue);
-	return (strcmp(endOfSource, value) == 0);
+	//return (strcmp(endOfSource, value) == 0);
+	return (memcmp(endOfSource, value, lenValue) == 0);
 }
 
-MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outputSize)
-{
+bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source, size_t lenSource) {
+	if (lenValue > lenSource) {
+		return false;
+	}
+	const char* endOfSource = source + (lenSource - lenValue);
+	//return (endOfSource[0] == value[0] && vectorized_strcmp_same_length(endOfSource, value, lenValue) == 0);
+	return (vectorized_strcmp_same_length(endOfSource, value, lenValue) == 0);
+}
+
+MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outputSize) {
 	MasterPart* outputArray = malloc(inputSize * sizeof(*outputArray));
 	if (!outputArray) {
 		fprintf(stderr, "Memory allocation failed\n");
@@ -118,16 +146,14 @@ MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLe
 	}
 
 	size_t count = 0;
-	for (size_t i = 0; i < inputSize; i++)
-	{
+	for (size_t i = 0; i < inputSize; i++) {
 		char* src = inputArray[i];
 
 		char buffer1[MAX_LINE_LEN];
 		to_upper_trim(src, buffer1, sizeof(buffer1));
 		size_t buffer1_len = strlen(buffer1);
 
-		if (buffer1_len >= minLen)
-		{
+		if (buffer1_len >= minLen) {
 			char buffer2[MAX_LINE_LEN];
 			remove_char(buffer1, buffer2, sizeof(buffer2), '-');
 
@@ -150,11 +176,9 @@ MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLe
 	return outputArray;
 }
 
-char** read_file_lines(const char* filename, size_t* outLineCount)
-{
+char** read_file_lines(const char* filename, size_t* outLineCount) {
 	FILE* file = fopen(filename, "r");
-	if (!file)
-	{
+	if (!file) {
 		fprintf(stderr, "Failed to open file: %s\n", filename);
 		exit(EXIT_FAILURE);
 	}
@@ -162,8 +186,7 @@ char** read_file_lines(const char* filename, size_t* outLineCount)
 	// First pass: count lines
 	size_t lineCount = 0;
 	char buffer[MAX_LINE_LEN];
-	while (fgets(buffer, sizeof(buffer), file))
-	{
+	while (fgets(buffer, sizeof(buffer), file)) {
 		lineCount++;
 	}
 
@@ -172,17 +195,14 @@ char** read_file_lines(const char* filename, size_t* outLineCount)
 
 	// Allocate array of pointers for lines
 	char** lines = malloc(lineCount * sizeof(*lines));
-	if (!lines)
-	{
+	if (!lines) {
 		fprintf(stderr, "Memory allocation failed\n");
 		exit(EXIT_FAILURE);
 	}
 
 	// Second pass: read lines and store them
-	for (size_t i = 0; i < lineCount; i++)
-	{
-		if (!fgets(buffer, sizeof(buffer), file))
-		{
+	for (size_t i = 0; i < lineCount; i++) {
+		if (!fgets(buffer, sizeof(buffer), file)) {
 			fprintf(stderr, "Failed to read line %zu\n", i);
 			exit(EXIT_FAILURE);
 		}
@@ -195,8 +215,7 @@ char** read_file_lines(const char* filename, size_t* outLineCount)
 		buffer[strcspn(buffer, "\r\n")] = '\0';
 
 		lines[i] = strdup(buffer);
-		if (!lines[i])
-		{
+		if (!lines[i]) {
 			fprintf(stderr, "Memory allocation failed\n");
 			exit(EXIT_FAILURE);
 		}

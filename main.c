@@ -6,9 +6,10 @@
 
 int main(int argc, char* argv[]) {
 
-    if (argc > 1 && strcmp(argv[1], "test") == 0) {
-        run_tests();
-    } else {
+	if (argc > 1 && strcmp(argv[1], "test") == 0) {
+		run_tests();
+	}
+	else {
 		double start, end, startProcess, endProcess;
 		start = get_time_seconds();
 
@@ -54,5 +55,5 @@ int main(int argc, char* argv[]) {
 		printf("Elapsed wall time: \t\t%f seconds\n", end - start);
 
 		return 0;
-    }
+	}
 }

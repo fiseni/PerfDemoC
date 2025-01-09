@@ -81,7 +81,7 @@ void run_tests() {
 
 	size_t masterPartsCount = 0;
 	MasterPart* masterParts = build_masterParts(masterPartNumbersTest, masterPartNumbersTestCount, 3, &masterPartsCount);
-	
+
 	initialize(masterParts, masterPartsCount, partNumbers, partsTestCount);
 
 	for (size_t i = 0; i < partsTestCount; i++) {
@@ -96,6 +96,7 @@ void run_tests() {
 		}
 
 		printf("Failed at: %s | Expected: %s | Found: %s\n", partsTest[i].PartNumber, partsTest[i].Expected, result);
+		return;
 	};
 
 	printf("All tests passed!\n");

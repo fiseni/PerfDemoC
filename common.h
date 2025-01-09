@@ -7,8 +7,8 @@
 #include <stdbool.h>
 
 typedef struct {
-    char* PartNumber;
-    char* PartNumberNoHyphens;
+	char* PartNumber;
+	char* PartNumberNoHyphens;
 } MasterPart;
 
 void run_tests();
@@ -16,7 +16,8 @@ void run_tests();
 char** read_file_lines(const char* filename, size_t* outLineCount);
 MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outputSize);
 
-bool is_suffix(const char* value, const char* source);
+bool is_suffix(const char* value, size_t lenValue, const char* source, size_t lenSource);
+bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source, size_t lenSource);
 
 int compare_partNumber_length(const void* a, const void* b);
 int compare_partNumber_length_desc(const void* a, const void* b);

@@ -14,9 +14,9 @@ int main(int argc, char* argv[]) {
 		start = get_time_seconds();
 
 		size_t partNumbersCount = 0;
-		char** partNumbers = read_file_lines("data/partsTest.txt", &partNumbersCount);
+		char** partNumbers = read_file_lines("data/partsShort.txt", &partNumbersCount);
 		size_t masterPartNumbersCount = 0;
-		char** masterPartNumbers = read_file_lines("data/masterPartsTest.txt", &masterPartNumbersCount);
+		char** masterPartNumbers = read_file_lines("data/masterPartsShort.txt", &masterPartNumbersCount);
 		printf("MasterPartNumbers: %zu, PartNumbers: %zu\n", masterPartNumbersCount, partNumbersCount);
 
 		size_t masterPartsCount = 0;
@@ -24,6 +24,7 @@ int main(int argc, char* argv[]) {
 
 		startProcess = get_time_seconds();
 		initialize(masterParts, masterPartsCount, partNumbers, partNumbersCount);
+		printf("Elapsed initialization time: \t%f seconds.\n", get_time_seconds() - startProcess);
 		size_t matchCount = run();
 		endProcess = get_time_seconds();
 		printf("Elapsed processing time: \t%f seconds. Found %zu matches.\n", endProcess - startProcess, matchCount);

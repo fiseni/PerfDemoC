@@ -120,6 +120,37 @@ static int vectorized_strcmp_same_length(const char* s1, const char* s2, size_t 
 	return 0;  // Strings are equal
 }
 
+static int vectorized_strcmp_same_length_avx2(const char* s1, const char* s2, size_t length) {
+	size_t i = 0;
+
+	// Process 32 bytes at a time using AVX2
+	for (; i + 31 < length; i += 32) {
+		// Load 32 bytes from each string (unaligned load)
+		__m256i chunk1 = _mm256_loadu_si256((const __m256i*)(s1 + i));
+		__m256i chunk2 = _mm256_loadu_si256((const __m256i*)(s2 + i));
+
+		// Compare the two chunks
+		__m256i cmp = _mm256_cmpeq_epi8(chunk1, chunk2);
+
+		// Create a mask from the comparison
+		int mask = _mm256_movemask_epi8(cmp);
+
+		// If mask is not all ones, there's a difference
+		if (mask != 0xFFFFFFFF) {
+			return 1;  // Strings differ
+		}
+	}
+
+	// Compare any remaining bytes
+	for (; i < length; i++) {
+		if (s1[i] != s2[i]) {
+			return 1;  // Strings differ
+		}
+	}
+
+	return 0;  // Strings are equal
+}
+
 bool is_suffix(const char* value, size_t lenValue, const char* source, size_t lenSource) {
 	if (lenValue > lenSource) {
 		return false;
@@ -136,7 +167,7 @@ bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source
 	const char* endOfSource = source + (lenSource - lenValue);
 
 	// Most of the time the strings are not equal. It turns out checking the first char improves the performance.
-	return (endOfSource[0] == value[0] && vectorized_strcmp_same_length(endOfSource, value, lenValue) == 0);
+	return (endOfSource[0] == value[0] && vectorized_strcmp_same_length_avx2(endOfSource, value, lenValue) == 0);
 }
 
 MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outputSize) {

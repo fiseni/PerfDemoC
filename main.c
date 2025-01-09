@@ -10,13 +10,21 @@ int main(int argc, char* argv[]) {
 		run_tests();
 	}
 	else {
+		char* partFile = "data/parts.txt";
+		char* masterPartFile = "data/masterParts.txt";
+
+		if (argc > 1 && strcmp(argv[1], "short") == 0) {
+			partFile = "data/partsShort.txt";
+			masterPartFile = "data/masterPartsShort.txt";
+		}
+
 		double start, end, startProcess, endProcess;
 		start = get_time_seconds();
 
 		size_t partNumbersCount = 0;
-		char** partNumbers = read_file_lines("data/partsShort.txt", &partNumbersCount);
+		char** partNumbers = read_file_lines(partFile, &partNumbersCount);
 		size_t masterPartNumbersCount = 0;
-		char** masterPartNumbers = read_file_lines("data/masterPartsShort.txt", &masterPartNumbersCount);
+		char** masterPartNumbers = read_file_lines(masterPartFile, &masterPartNumbersCount);
 		printf("MasterPartNumbers: %zu, PartNumbers: %zu\n", masterPartNumbersCount, partNumbersCount);
 
 		size_t masterPartsCount = 0;

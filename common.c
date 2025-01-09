@@ -89,37 +89,6 @@ void remove_char(char* src, char* buffer, size_t bufferSize, char find) {
 	buffer[j] = '\0';
 }
 
-static int vectorized_strcmp_same_length(const char* s1, const char* s2, size_t length) {
-	size_t i = 0;
-
-	// Process 16 bytes at a time using SSE2
-	for (; i + 15 < length; i += 16) {
-		// Load 16 bytes from each string
-		__m128i chunk1 = _mm_loadu_si128((const __m128i*)(s1 + i));
-		__m128i chunk2 = _mm_loadu_si128((const __m128i*)(s2 + i));
-
-		// Compare the two chunks
-		__m128i cmp = _mm_cmpeq_epi8(chunk1, chunk2);
-
-		// Create a mask from the comparison
-		int mask = _mm_movemask_epi8(cmp);
-
-		// If mask is not all ones, there's a difference
-		if (mask != 0xFFFF) {
-			return 1;  // Strings differ
-		}
-	}
-
-	// Compare any remaining bytes
-	for (; i < length; i++) {
-		if (s1[i] != s2[i]) {
-			return 1;  // Strings differ
-		}
-	}
-
-	return 0;  // Strings are equal
-}
-
 static int vectorized_strcmp_same_length_avx2(const char* s1, const char* s2, size_t length) {
 	size_t i = 0;
 
@@ -129,7 +98,7 @@ static int vectorized_strcmp_same_length_avx2(const char* s1, const char* s2, si
 		__m256i chunk1 = _mm256_loadu_si256((const __m256i*)(s1 + i));
 		__m256i chunk2 = _mm256_loadu_si256((const __m256i*)(s2 + i));
 
-		// Compare the two chunks
+		// Compare the two chunks byte-wise
 		__m256i cmp = _mm256_cmpeq_epi8(chunk1, chunk2);
 
 		// Create a mask from the comparison
@@ -137,18 +106,50 @@ static int vectorized_strcmp_same_length_avx2(const char* s1, const char* s2, si
 
 		// If mask is not all ones, there's a difference
 		if (mask != 0xFFFFFFFF) {
-			return 1;  // Strings differ
+			return 1;
 		}
 	}
+
+	// Process 16 bytes at a time using SSE2
+	for (; i + 15 < length; i += 16) {
+		// Load 16 bytes from each string (unaligned load)
+		__m128i chunk1 = _mm_loadu_si128((const __m128i*)(s1 + i));
+		__m128i chunk2 = _mm_loadu_si128((const __m128i*)(s2 + i));
+
+		__m128i cmp = _mm_cmpeq_epi8(chunk1, chunk2);
+		int mask = _mm_movemask_epi8(cmp);
+
+		if (mask != 0xFFFF) {
+			return 1;
+		}
+	}
+
+	//// The overhead of it for 8 bytes is not worth it. I didn't notice any performance improvement.
+	//// Process 8 bytes at a time using SSE2
+	//for (; i + 7 < length; i += 8) {
+	//	// Load 8 bytes into the lower half of a 128-bit register
+	//	__m128i chunk1 = _mm_loadl_epi64((const __m128i*)(s1 + i));
+	//	__m128i chunk2 = _mm_loadl_epi64((const __m128i*)(s2 + i));
+
+	//	// Compare the two chunks byte-wise
+	//	__m128i cmp = _mm_cmpeq_epi8(chunk1, chunk2);
+
+	//	// Create a mask from the comparison (only lower 8 bits are relevant)
+	//	int mask = _mm_movemask_epi8(cmp) & 0xFF;
+
+	//	if (mask != 0xFF) {
+	//		return 1; // Strings differ
+	//	}
+	//}
 
 	// Compare any remaining bytes
 	for (; i < length; i++) {
 		if (s1[i] != s2[i]) {
-			return 1;  // Strings differ
+			return 1;
 		}
 	}
 
-	return 0;  // Strings are equal
+	return 0; // Strings are equal
 }
 
 bool is_suffix(const char* value, size_t lenValue, const char* source, size_t lenSource) {
@@ -166,7 +167,8 @@ bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source
 	}
 	const char* endOfSource = source + (lenSource - lenValue);
 
-	// Most of the time the strings are not equal. It turns out checking the first char improves the performance.
+	// For our use-case most of the time the strings are not equal.
+	// It turns out checking the first char before vectorization improves the performance.
 	return (endOfSource[0] == value[0] && vectorized_strcmp_same_length_avx2(endOfSource, value, lenValue) == 0);
 }
 

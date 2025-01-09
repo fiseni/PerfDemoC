@@ -134,8 +134,9 @@ bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source
 		return false;
 	}
 	const char* endOfSource = source + (lenSource - lenValue);
-	//return (endOfSource[0] == value[0] && vectorized_strcmp_same_length(endOfSource, value, lenValue) == 0);
-	return (vectorized_strcmp_same_length(endOfSource, value, lenValue) == 0);
+
+	// Most of the time the strings are not equal. It turns out checking the first char improves the performance.
+	return (endOfSource[0] == value[0] && vectorized_strcmp_same_length(endOfSource, value, lenValue) == 0);
 }
 
 MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outputSize) {

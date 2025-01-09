@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 		initialize(masterParts, masterPartsCount, partNumbers, partNumbersCount);
 		size_t matchCount = run();
 		endProcess = get_time_seconds();
-		printf("Elapsed processing time: \t%f seconds. Found %zu matches\n", endProcess - startProcess, matchCount);
+		printf("Elapsed processing time: \t%f seconds. Found %zu matches.\n", endProcess - startProcess, matchCount);
 
 		// We don't really need to clean anything here. We're just trying to mimic the actions in the real app.
 		for (size_t i = 0; i < masterPartsCount; i++) {
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 		partNumbers = NULL;
 
 		end = get_time_seconds();
-		printf("Elapsed wall time: \t\t%f seconds\n", end - start);
+		printf("Elapsed wall time: \t\t%f seconds.\n", end - start);
 
 		return 0;
 	}

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <emmintrin.h>
+#include <immintrin.h>
 #include "common.h"
 #include "processor.h"
 

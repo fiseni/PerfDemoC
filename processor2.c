@@ -6,6 +6,8 @@
 #include "common.h"
 #include "processor.h"
 
+#define MAX_NUMBER ((size_t)-1)
+
 const char* get_identifier() {
 	return "Processor2";
 }
@@ -13,9 +15,9 @@ const char* get_identifier() {
 MasterPart* masterPartsAsc = NULL;
 MasterPart* masterPartsAscByNoHyphens = NULL;
 size_t masterPartsCount = 0;
-size_t startIndexByLengthAsc[MAX_LINE_LEN + 1] = { -1 };
-size_t startIndexByLengthAscNoHyphens[MAX_LINE_LEN + 1] = { -1 };
-size_t startIndexByLengthDesc[MAX_LINE_LEN + 1] = { -1 };
+size_t startIndexByLengthAsc[MAX_LINE_LEN + 1];
+size_t startIndexByLengthAscNoHyphens[MAX_LINE_LEN + 1];
+size_t startIndexByLengthDesc[MAX_LINE_LEN + 1];
 
 char** parts = NULL;
 size_t partsCount = 0;
@@ -23,7 +25,7 @@ size_t partsCount = 0;
 static void backward_fill(size_t* array) {
 	size_t tmp = array[MAX_LINE_LEN];
 	for (int i = MAX_LINE_LEN; i >= 0; i--) {
-		if (array[i] == -1) {
+		if (array[i] == MAX_NUMBER) {
 			array[i] = tmp;
 		}
 		else {
@@ -35,7 +37,7 @@ static void backward_fill(size_t* array) {
 static void forward_fill(size_t* array) {
 	size_t tmp = array[0];
 	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
-		if (array[i] == -1) {
+		if (array[i] == MAX_NUMBER) {
 			array[i] = tmp;
 		}
 		else {
@@ -61,16 +63,22 @@ void initialize(MasterPart* masterParts, size_t count, char** partNumbers, size_
 	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_partNumberNoHyphens_length);
 
 
+	for (int i = 0; i <= MAX_LINE_LEN; i++) {
+		startIndexByLengthAsc[i] = MAX_NUMBER;
+		startIndexByLengthAscNoHyphens[i] = MAX_NUMBER;
+		startIndexByLengthDesc[i] = MAX_NUMBER;
+	}
+
 	// Populate the start indices
 	for (size_t i = 0; i < masterPartsCount; i++) {
 		size_t length = strlen(masterPartsAsc[i].PartNumber);
-		if (startIndexByLengthAsc[length] == -1) {
+		if (startIndexByLengthAsc[length] == MAX_NUMBER) {
 			startIndexByLengthAsc[length] = i;
 		}
 		startIndexByLengthDesc[length] = i;
 
 		length = strlen(masterPartsAscByNoHyphens[i].PartNumberNoHyphens);
-		if (startIndexByLengthAscNoHyphens[length] == -1) {
+		if (startIndexByLengthAscNoHyphens[length] == MAX_NUMBER) {
 			startIndexByLengthAscNoHyphens[length] = i;
 		}
 	}
@@ -95,7 +103,7 @@ char* find_match(char* partNumber) {
 	}
 
 	size_t startIndex = startIndexByLengthAsc[bufferLen];
-	if (startIndex != -1) {
+	if (startIndex != MAX_NUMBER) {
 		for (size_t i = startIndex; i < masterPartsCount; i++) {
 			MasterPart mp = masterPartsAsc[i];
 			if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumber, strlen(mp.PartNumber))) {
@@ -105,7 +113,7 @@ char* find_match(char* partNumber) {
 	}
 
 	startIndex = startIndexByLengthAscNoHyphens[bufferLen];
-	if (startIndex != -1) {
+	if (startIndex != MAX_NUMBER) {
 		for (size_t i = startIndex; i < masterPartsCount; i++) {
 			MasterPart mp = masterPartsAscByNoHyphens[i];
 			if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumberNoHyphens, strlen(mp.PartNumberNoHyphens))) {
@@ -115,7 +123,7 @@ char* find_match(char* partNumber) {
 	}
 
 	startIndex = startIndexByLengthDesc[bufferLen];
-	if (startIndex != -1) {
+	if (startIndex != MAX_NUMBER) {
 		for (long i = (long)startIndex; i >= 0; i--) {
 			MasterPart mp = masterPartsAsc[i];
 			if (is_suffix_vectorized(mp.PartNumber, strlen(mp.PartNumber), buffer, bufferLen)) {

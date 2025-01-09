@@ -13,6 +13,8 @@ int main(int argc, char* argv[]) {
 	else {
 		char* partFile = "data/parts.txt";
 		char* masterPartFile = "data/masterParts.txt";
+		//char* partFile = "data/partsTest.txt";
+		//char* masterPartFile = "data/masterPartsTest.txt";
 
 		if (argc > 1 && strcmp(argv[1], "short") == 0) {
 			partFile = "data/partsShort.txt";

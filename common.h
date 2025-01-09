@@ -1,7 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#define MAX_LINE_LEN 50
+#define MAX_LINE_LEN ((size_t)50)
 
 #include <stdlib.h>
 #include <stdbool.h>

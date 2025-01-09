@@ -132,7 +132,13 @@
     <ClCompile Include="common.c" />
     <ClCompile Include="cross_platform_time.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="processor1.c" />
+    <ClCompile Include="processor1.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="processor2.c" />
     <ClCompile Include="test.c" />
   </ItemGroup>
   <ItemGroup>

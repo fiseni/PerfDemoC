@@ -1,10 +1,10 @@
 #!/bin/bash
 
-type="$1"
-impl="$2"
+impl="$1"
+type="$2"
 
 if [ "$type" = "" ]; then
-type="short"
+type="test"
 fi
 
 if [ "$impl" = "" ]; then

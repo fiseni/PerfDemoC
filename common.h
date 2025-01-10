@@ -1,12 +1,15 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+// It's provided that the length of part numbers is maximum 50 characters
 #define MAX_LINE_LEN ((size_t)50)
 
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef struct {
+typedef struct MasterPart {
+	int PartNumberLength;
+	int PartNumberNoHyphensLength;
 	char* PartNumber;
 	char* PartNumberNoHyphens;
 } MasterPart;
@@ -14,7 +17,7 @@ typedef struct {
 void run_tests();
 
 char** read_file_lines(const char* filename, size_t* outLineCount);
-MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outputSize);
+MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outSize);
 
 bool is_suffix(const char* value, size_t lenValue, const char* source, size_t lenSource);
 bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source, size_t lenSource);

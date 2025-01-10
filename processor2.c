@@ -6,7 +6,7 @@
 #include "common.h"
 #include "processor.h"
 
-#define MAX_NUMBER ((size_t)-1)
+const size_t MAX_VALUE = ((size_t)-1);
 
 const char* get_identifier() {
 	return "Processor2";
@@ -25,7 +25,7 @@ size_t partsCount = 0;
 static void backward_fill(size_t* array) {
 	size_t tmp = array[MAX_LINE_LEN];
 	for (int i = MAX_LINE_LEN; i >= 0; i--) {
-		if (array[i] == MAX_NUMBER) {
+		if (array[i] == MAX_VALUE) {
 			array[i] = tmp;
 		}
 		else {
@@ -36,8 +36,8 @@ static void backward_fill(size_t* array) {
 
 static void forward_fill(size_t* array) {
 	size_t tmp = array[0];
-	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
-		if (array[i] == MAX_NUMBER) {
+	for (int i = 0; i <= MAX_LINE_LEN; i++) {
+		if (array[i] == MAX_VALUE) {
 			array[i] = tmp;
 		}
 		else {
@@ -64,21 +64,21 @@ void initialize(MasterPart* masterParts, size_t count, char** partNumbers, size_
 
 
 	for (int i = 0; i <= MAX_LINE_LEN; i++) {
-		startIndexByLengthAsc[i] = MAX_NUMBER;
-		startIndexByLengthAscNoHyphens[i] = MAX_NUMBER;
-		startIndexByLengthDesc[i] = MAX_NUMBER;
+		startIndexByLengthAsc[i] = MAX_VALUE;
+		startIndexByLengthAscNoHyphens[i] = MAX_VALUE;
+		startIndexByLengthDesc[i] = MAX_VALUE;
 	}
 
 	// Populate the start indices
 	for (size_t i = 0; i < masterPartsCount; i++) {
-		size_t length = strlen(masterPartsAsc[i].PartNumber);
-		if (startIndexByLengthAsc[length] == MAX_NUMBER) {
+		size_t length = masterPartsAsc[i].PartNumberLength;
+		if (startIndexByLengthAsc[length] == MAX_VALUE) {
 			startIndexByLengthAsc[length] = i;
 		}
 		startIndexByLengthDesc[length] = i;
 
-		length = strlen(masterPartsAscByNoHyphens[i].PartNumberNoHyphens);
-		if (startIndexByLengthAscNoHyphens[length] == MAX_NUMBER) {
+		length = masterPartsAscByNoHyphens[i].PartNumberNoHyphensLength;
+		if (startIndexByLengthAscNoHyphens[length] == MAX_VALUE) {
 			startIndexByLengthAscNoHyphens[length] = i;
 		}
 	}
@@ -96,37 +96,36 @@ char* find_match(char* partNumber) {
 
 	char buffer[MAX_LINE_LEN];
 	to_upper_trim(partNumber, buffer, sizeof(buffer));
-
 	size_t bufferLen = strlen(buffer);
 	if (bufferLen < 3) {
 		return NULL;
 	}
 
 	size_t startIndex = startIndexByLengthAsc[bufferLen];
-	if (startIndex != MAX_NUMBER) {
+	if (startIndex != MAX_VALUE) {
 		for (size_t i = startIndex; i < masterPartsCount; i++) {
 			MasterPart mp = masterPartsAsc[i];
-			if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumber, strlen(mp.PartNumber))) {
+			if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumber, mp.PartNumberLength)) {
 				return mp.PartNumber;
 			}
 		}
 	}
 
 	startIndex = startIndexByLengthAscNoHyphens[bufferLen];
-	if (startIndex != MAX_NUMBER) {
+	if (startIndex != MAX_VALUE) {
 		for (size_t i = startIndex; i < masterPartsCount; i++) {
 			MasterPart mp = masterPartsAscByNoHyphens[i];
-			if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumberNoHyphens, strlen(mp.PartNumberNoHyphens))) {
+			if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumberNoHyphens, mp.PartNumberNoHyphensLength)) {
 				return mp.PartNumber;
 			}
 		}
 	}
 
 	startIndex = startIndexByLengthDesc[bufferLen];
-	if (startIndex != MAX_NUMBER) {
+	if (startIndex != MAX_VALUE) {
 		for (long i = (long)startIndex; i >= 0; i--) {
 			MasterPart mp = masterPartsAsc[i];
-			if (is_suffix_vectorized(mp.PartNumber, strlen(mp.PartNumber), buffer, bufferLen)) {
+			if (is_suffix_vectorized(mp.PartNumber, mp.PartNumberLength, buffer, bufferLen)) {
 				return mp.PartNumber;
 			}
 		}

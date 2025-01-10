@@ -26,33 +26,24 @@ void print_masterParts(MasterPart* masterParts, size_t masterPartsCount) {
 }
 
 int compare_partNumber_length(const void* a, const void* b) {
-	const MasterPart* mpA = (const MasterPart*)a;
-	const MasterPart* mpB = (const MasterPart*)b;
-
-	size_t lenA = strlen(mpA->PartNumber);
-	size_t lenB = strlen(mpB->PartNumber);
+	size_t lenA = ((const MasterPart*)a)->PartNumberLength;
+	size_t lenB = ((const MasterPart*)b)->PartNumberLength;
 
 	// Compare lengths for ascending order
 	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
 int compare_partNumber_length_desc(const void* a, const void* b) {
-	const MasterPart* mpA = (const MasterPart*)a;
-	const MasterPart* mpB = (const MasterPart*)b;
-
-	size_t lenA = strlen(mpA->PartNumber);
-	size_t lenB = strlen(mpB->PartNumber);
+	size_t lenA = ((const MasterPart*)a)->PartNumberLength;
+	size_t lenB = ((const MasterPart*)b)->PartNumberLength;
 
 	// Compare lengths for descending order
 	return lenA < lenB ? 1 : lenA > lenB ? -1 : 0;
 }
 
 int compare_partNumberNoHyphens_length(const void* a, const void* b) {
-	const MasterPart* mpA = (const MasterPart*)a;
-	const MasterPart* mpB = (const MasterPart*)b;
-
-	size_t lenA = strlen(mpA->PartNumberNoHyphens);
-	size_t lenB = strlen(mpB->PartNumberNoHyphens);
+	size_t lenA = ((const MasterPart*)a)->PartNumberNoHyphensLength;
+	size_t lenB = ((const MasterPart*)b)->PartNumberNoHyphensLength;
 
 	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
@@ -89,10 +80,12 @@ void remove_char(char* src, char* buffer, size_t bufferSize, char find) {
 	buffer[j] = '\0';
 }
 
-static int vectorized_strcmp_same_length_avx2(const char* s1, const char* s2, size_t length) {
+static int vectorized_strcmp_same_length(const char* s1, const char* s2, size_t length) {
 	size_t i = 0;
 
 	// Process 32 bytes at a time using AVX2
+	// There are very few cases where strings are longer than 32 bytes. Not worth it.
+	/*
 	for (; i + 31 < length; i += 32) {
 		// Load 32 bytes from each string (unaligned load)
 		__m256i chunk1 = _mm256_loadu_si256((const __m256i*)(s1 + i));
@@ -109,6 +102,7 @@ static int vectorized_strcmp_same_length_avx2(const char* s1, const char* s2, si
 			return 1;
 		}
 	}
+	*/
 
 	// Process 16 bytes at a time using SSE2
 	for (; i + 15 < length; i += 16) {
@@ -124,23 +118,25 @@ static int vectorized_strcmp_same_length_avx2(const char* s1, const char* s2, si
 		}
 	}
 
-	//// The overhead of it for 8 bytes is not worth it. I didn't notice any performance improvement.
-	//// Process 8 bytes at a time using SSE2
-	//for (; i + 7 < length; i += 8) {
-	//	// Load 8 bytes into the lower half of a 128-bit register
-	//	__m128i chunk1 = _mm_loadl_epi64((const __m128i*)(s1 + i));
-	//	__m128i chunk2 = _mm_loadl_epi64((const __m128i*)(s2 + i));
+	// The overhead of it for 8 bytes is not worth it. I didn't notice any performance improvement.
+	// Process 8 bytes at a time using SSE2
+	/*
+	for (; i + 7 < length; i += 8) {
+		// Load 8 bytes into the lower half of a 128-bit register
+		__m128i chunk1 = _mm_loadl_epi64((const __m128i*)(s1 + i));
+		__m128i chunk2 = _mm_loadl_epi64((const __m128i*)(s2 + i));
 
-	//	// Compare the two chunks byte-wise
-	//	__m128i cmp = _mm_cmpeq_epi8(chunk1, chunk2);
+		// Compare the two chunks byte-wise
+		__m128i cmp = _mm_cmpeq_epi8(chunk1, chunk2);
 
-	//	// Create a mask from the comparison (only lower 8 bits are relevant)
-	//	int mask = _mm_movemask_epi8(cmp) & 0xFF;
+		// Create a mask from the comparison (only lower 8 bits are relevant)
+		int mask = _mm_movemask_epi8(cmp) & 0xFF;
 
-	//	if (mask != 0xFF) {
-	//		return 1; // Strings differ
-	//	}
-	//}
+		if (mask != 0xFF) {
+			return 1; // Strings differ
+		}
+	}
+	*/
 
 	// Compare any remaining bytes
 	for (; i < length; i++) {
@@ -169,10 +165,12 @@ bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source
 
 	// For our use-case most of the time the strings are not equal.
 	// It turns out checking the first char before vectorization improves the performance.
-	return (endOfSource[0] == value[0] && vectorized_strcmp_same_length_avx2(endOfSource, value, lenValue) == 0);
+	return (endOfSource[0] == value[0] && vectorized_strcmp_same_length(endOfSource, value, lenValue) == 0);
 }
 
-MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outputSize) {
+
+
+MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outSize) {
 	MasterPart* outputArray = malloc(inputSize * sizeof(*outputArray));
 	if (!outputArray) {
 		fprintf(stderr, "Memory allocation failed\n");
@@ -190,9 +188,12 @@ MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLe
 		if (buffer1_len >= minLen) {
 			char buffer2[MAX_LINE_LEN];
 			remove_char(buffer1, buffer2, sizeof(buffer2), '-');
+			size_t buffer2_len = strlen(buffer2);
 
+			outputArray[count].PartNumberLength = (int)buffer1_len;
+			outputArray[count].PartNumberNoHyphensLength = (int)buffer2_len;
 			outputArray[count].PartNumber = malloc(buffer1_len + 1);
-			outputArray[count].PartNumberNoHyphens = malloc(strlen(buffer2) + 1);
+			outputArray[count].PartNumberNoHyphens = malloc(buffer2_len + 1);
 
 			if (!outputArray[count].PartNumber || !outputArray[count].PartNumberNoHyphens) {
 				fprintf(stderr, "Memory allocation failed\n");
@@ -206,7 +207,7 @@ MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLe
 		}
 	}
 
-	*outputSize = count;
+	*outSize = count;
 	return outputArray;
 }
 

@@ -71,13 +71,13 @@ void initialize(MasterPart* masterParts, size_t count, char** partNumbers, size_
 
 	// Populate the start indices
 	for (size_t i = 0; i < masterPartsCount; i++) {
-		size_t length = masterPartsAsc[i].PartNumberLength;
+		size_t length = masterPartsAsc[i].partNumberLength;
 		if (startIndexByLengthAsc[length] == MAX_VALUE) {
 			startIndexByLengthAsc[length] = i;
 		}
 		startIndexByLengthDesc[length] = i;
 
-		length = masterPartsAscByNoHyphens[i].PartNumberNoHyphensLength;
+		length = masterPartsAscByNoHyphens[i].partNumberNoHyphensLength;
 		if (startIndexByLengthAscNoHyphens[length] == MAX_VALUE) {
 			startIndexByLengthAscNoHyphens[length] = i;
 		}
@@ -105,8 +105,8 @@ char* find_match(char* partNumber) {
 	if (startIndex != MAX_VALUE) {
 		for (size_t i = startIndex; i < masterPartsCount; i++) {
 			MasterPart mp = masterPartsAsc[i];
-			if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumber, mp.PartNumberLength)) {
-				return mp.PartNumber;
+			if (is_suffix_vectorized(buffer, bufferLen, mp.partNumber, mp.partNumberLength)) {
+				return mp.partNumber;
 			}
 		}
 	}
@@ -115,8 +115,8 @@ char* find_match(char* partNumber) {
 	if (startIndex != MAX_VALUE) {
 		for (size_t i = startIndex; i < masterPartsCount; i++) {
 			MasterPart mp = masterPartsAscByNoHyphens[i];
-			if (is_suffix_vectorized(buffer, bufferLen, mp.PartNumberNoHyphens, mp.PartNumberNoHyphensLength)) {
-				return mp.PartNumber;
+			if (is_suffix_vectorized(buffer, bufferLen, mp.partNumberNoHyphens, mp.partNumberNoHyphensLength)) {
+				return mp.partNumber;
 			}
 		}
 	}
@@ -125,8 +125,8 @@ char* find_match(char* partNumber) {
 	if (startIndex != MAX_VALUE) {
 		for (long i = (long)startIndex; i >= 0; i--) {
 			MasterPart mp = masterPartsAsc[i];
-			if (is_suffix_vectorized(mp.PartNumber, mp.PartNumberLength, buffer, bufferLen)) {
-				return mp.PartNumber;
+			if (is_suffix_vectorized(mp.partNumber, mp.partNumberLength, buffer, bufferLen)) {
+				return mp.partNumber;
 			}
 		}
 	}

@@ -18,32 +18,32 @@ void print_array(char* array[], size_t size) {
 
 void print_masterParts(MasterPart* masterParts, size_t masterPartsCount) {
 	for (size_t i = 0; i < masterPartsCount; i++) {
-		printf("%s\n", masterParts[i].PartNumber);
-		printf("%s\n", masterParts[i].PartNumberNoHyphens);
+		printf("%s\n", masterParts[i].partNumber);
+		printf("%s\n", masterParts[i].partNumberNoHyphens);
 	}
 
 	printf("#################################\n");
 }
 
 int compare_partNumber_length(const void* a, const void* b) {
-	size_t lenA = ((const MasterPart*)a)->PartNumberLength;
-	size_t lenB = ((const MasterPart*)b)->PartNumberLength;
+	size_t lenA = ((const MasterPart*)a)->partNumberLength;
+	size_t lenB = ((const MasterPart*)b)->partNumberLength;
 
 	// Compare lengths for ascending order
 	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
 int compare_partNumber_length_desc(const void* a, const void* b) {
-	size_t lenA = ((const MasterPart*)a)->PartNumberLength;
-	size_t lenB = ((const MasterPart*)b)->PartNumberLength;
+	size_t lenA = ((const MasterPart*)a)->partNumberLength;
+	size_t lenB = ((const MasterPart*)b)->partNumberLength;
 
 	// Compare lengths for descending order
 	return lenA < lenB ? 1 : lenA > lenB ? -1 : 0;
 }
 
 int compare_partNumberNoHyphens_length(const void* a, const void* b) {
-	size_t lenA = ((const MasterPart*)a)->PartNumberNoHyphensLength;
-	size_t lenB = ((const MasterPart*)b)->PartNumberNoHyphensLength;
+	size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
+	size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
 
 	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
@@ -80,7 +80,7 @@ void remove_char(char* src, char* buffer, size_t bufferSize, char find) {
 	buffer[j] = '\0';
 }
 
-static int vectorized_strcmp_same_length(const char* s1, const char* s2, size_t length) {
+static int strcmp_same_length_vectorized(const char* s1, const char* s2, size_t length) {
 	size_t i = 0;
 
 	// Process 32 bytes at a time using AVX2
@@ -165,7 +165,7 @@ bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source
 
 	// For our use-case most of the time the strings are not equal.
 	// It turns out checking the first char before vectorization improves the performance.
-	return (endOfSource[0] == value[0] && vectorized_strcmp_same_length(endOfSource, value, lenValue) == 0);
+	return (endOfSource[0] == value[0] && strcmp_same_length_vectorized(endOfSource, value, lenValue) == 0);
 }
 
 
@@ -190,18 +190,18 @@ MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLe
 			remove_char(buffer1, buffer2, sizeof(buffer2), '-');
 			size_t buffer2_len = strlen(buffer2);
 
-			outputArray[count].PartNumberLength = (int)buffer1_len;
-			outputArray[count].PartNumberNoHyphensLength = (int)buffer2_len;
-			outputArray[count].PartNumber = malloc(buffer1_len + 1);
-			outputArray[count].PartNumberNoHyphens = malloc(buffer2_len + 1);
+			outputArray[count].partNumberLength = (int)buffer1_len;
+			outputArray[count].partNumberNoHyphensLength = (int)buffer2_len;
+			outputArray[count].partNumber = malloc(buffer1_len + 1);
+			outputArray[count].partNumberNoHyphens = malloc(buffer2_len + 1);
 
-			if (!outputArray[count].PartNumber || !outputArray[count].PartNumberNoHyphens) {
+			if (!outputArray[count].partNumber || !outputArray[count].partNumberNoHyphens) {
 				fprintf(stderr, "Memory allocation failed\n");
 				exit(EXIT_FAILURE);
 			}
 
-			strcpy(outputArray[count].PartNumber, buffer1);
-			strcpy(outputArray[count].PartNumberNoHyphens, buffer2);
+			strcpy(outputArray[count].partNumber, buffer1);
+			strcpy(outputArray[count].partNumberNoHyphens, buffer2);
 
 			count++;
 		}

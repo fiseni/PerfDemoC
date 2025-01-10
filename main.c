@@ -42,10 +42,10 @@ int main(int argc, char* argv[]) {
 
 		// We don't really need to clean anything here. We're just trying to mimic the actions in the real app.
 		for (size_t i = 0; i < masterPartsCount; i++) {
-			free(masterParts[i].PartNumber);
-			masterParts[i].PartNumber = NULL;
-			free(masterParts[i].PartNumberNoHyphens);
-			masterParts[i].PartNumberNoHyphens = NULL;
+			free(masterParts[i].partNumber);
+			masterParts[i].partNumber = NULL;
+			free(masterParts[i].partNumberNoHyphens);
+			masterParts[i].partNumberNoHyphens = NULL;
 		}
 		free(masterParts);
 		masterParts = NULL;

@@ -4,14 +4,14 @@
 #include "common.h"
 #include "processor.h"
 
-typedef struct {
-	char* Expected;
-	char* PartNumber;
+typedef struct PartTest {
+	char* expected;
+	char* partNumber;
 } PartTest;
 
 PartTest partsTest[] =
 {
-	// Expected, PartNumber
+	// expected, partNumber
 	{NULL, "  "},
 	{NULL, ""},
 	{NULL, "a"},
@@ -69,7 +69,7 @@ static char** extract_partNumbers(size_t count) {
 		exit(EXIT_FAILURE);
 	};
 	for (size_t i = 0; i < count; i++) {
-		partNumbers[i] = partsTest[i].PartNumber;
+		partNumbers[i] = partsTest[i].partNumber;
 	};
 	return partNumbers;
 }
@@ -85,17 +85,17 @@ void run_tests() {
 	initialize(masterParts, masterPartsCount, partNumbers, partsTestCount);
 
 	for (size_t i = 0; i < partsTestCount; i++) {
-		char* result = find_match(partsTest[i].PartNumber);
+		char* result = find_match(partsTest[i].partNumber);
 
-		if (result == NULL && partsTest[i].Expected == NULL) {
+		if (result == NULL && partsTest[i].expected == NULL) {
 			continue;
 		}
 
-		if (result != NULL && partsTest[i].Expected != NULL && strcmp(result, partsTest[i].Expected) == 0) {
+		if (result != NULL && partsTest[i].expected != NULL && strcmp(result, partsTest[i].expected) == 0) {
 			continue;
 		}
 
-		printf("Failed at: %s | Expected: %s | Found: %s\n", partsTest[i].PartNumber, partsTest[i].Expected, result);
+		printf("Failed at: %s | Expected: %s | Found: %s\n", partsTest[i].partNumber, partsTest[i].expected, result);
 		return;
 	};
 

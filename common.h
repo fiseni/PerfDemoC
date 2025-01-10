@@ -8,10 +8,10 @@
 #include <stdbool.h>
 
 typedef struct MasterPart {
-	int PartNumberLength;
-	int PartNumberNoHyphensLength;
-	char* PartNumber;
-	char* PartNumberNoHyphens;
+	int partNumberLength;
+	int partNumberNoHyphensLength;
+	char* partNumber;
+	char* partNumberNoHyphens;
 } MasterPart;
 
 void run_tests();

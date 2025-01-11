@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "utils.h"
 #include "hash_table.h"
 #include "source_data.h"
@@ -56,20 +57,14 @@ static void forward_fill(size_t* array) {
 
 static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t count) {
 	MasterPart* masterPartsNoHyphens = malloc(count * sizeof(*masterPartsNoHyphens));
-	if (!masterPartsNoHyphens) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(masterPartsNoHyphens);
 	memcpy(masterPartsNoHyphens, masterParts, count * sizeof(*masterPartsNoHyphens));
 
 	qsort(masterParts, count, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
 	qsort(masterPartsNoHyphens, count, sizeof(*masterPartsNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
 
 	MasterPartsInfo* mpInfo = malloc(sizeof(*mpInfo));
-	if (!mpInfo) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(mpInfo);
 	mpInfo->masterParts = masterParts;
 	mpInfo->masterPartsNoHyphens = masterPartsNoHyphens;
 	mpInfo->masterPartsCount = count;
@@ -131,10 +126,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t co
 
 static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t minLen) {
 	Part* parts = malloc(inputSize * sizeof(*parts));
-	if (!parts) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(parts);
 
 	size_t count = 0;
 	for (size_t i = 0; i < inputSize; i++) {
@@ -148,10 +140,7 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
 			Part* part = &parts[count];
 			part->partNumberLength = (int)buffer_len;
 			part->partNumber = malloc(buffer_len + 1);
-			if (!part->partNumber) {
-				fprintf(stderr, "Memory allocation failed\n");
-				exit(EXIT_FAILURE);
-			}
+			assert(part->partNumber);
 			strcpy(part->partNumber, buffer);
 			count++;
 		}
@@ -159,10 +148,7 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
 	qsort(parts, count, sizeof(*parts), compare_part_by_partNumber_length_asc);
 
 	PartsInfo* partsInfo = malloc(sizeof(*partsInfo));
-	if (!partsInfo) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(partsInfo);
 	partsInfo->parts = parts;
 	partsInfo->partsCount = count;
 

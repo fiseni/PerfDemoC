@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "utils.h"
 #include "source_data.h"
 #include "processor.h"
@@ -15,25 +16,18 @@ MasterPart* masterPartsDesc = NULL;
 size_t masterPartsCount = 0;
 
 void processor_initialize(SourceData* data) {
-	masterPartsAsc = data->masterParts;
 	masterPartsCount = data->masterPartsCount;
+	masterPartsAsc = data->masterParts;
+	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
 
 	masterPartsAscByNoHyphens = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
-	if (!masterPartsAscByNoHyphens) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(masterPartsAscByNoHyphens);
 	memcpy(masterPartsAscByNoHyphens, masterPartsAsc, masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
+	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
 
 	masterPartsDesc = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsDesc));
-	if (!masterPartsDesc) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(masterPartsDesc);
 	memcpy(masterPartsDesc, masterPartsAsc, masterPartsCount * sizeof(*masterPartsDesc));
-
-	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
-	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
 	qsort(masterPartsDesc, masterPartsCount, sizeof(*masterPartsDesc), compare_mp_by_partNumber_length_desc);
 }
 
@@ -45,7 +39,6 @@ const char* processor_find_match(char* partNumber) {
 
 	char buffer[MAX_LINE_LEN];
 	to_upper_trim(partNumber, buffer, sizeof(buffer));
-
 	size_t bufferLen = strlen(buffer);
 	if (bufferLen < 3) {
 		return NULL;

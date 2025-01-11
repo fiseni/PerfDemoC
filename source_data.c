@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "utils.h"
 #include "source_data.h"
 
@@ -10,10 +11,7 @@
 
 static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outSize) {
 	MasterPart* outputArray = malloc(inputSize * sizeof(*outputArray));
-	if (!outputArray) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(outputArray);
 
 	size_t count = 0;
 	for (size_t i = 0; i < inputSize; i++) {
@@ -33,10 +31,7 @@ static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_
 			outputArray[count].partNumber = malloc(buffer1_len + 1);
 			outputArray[count].partNumberNoHyphens = malloc(buffer2_len + 1);
 
-			if (!outputArray[count].partNumber || !outputArray[count].partNumberNoHyphens) {
-				fprintf(stderr, "Memory allocation failed\n");
-				exit(EXIT_FAILURE);
-			}
+			assert(outputArray[count].partNumber && outputArray[count].partNumberNoHyphens);
 
 			strcpy(outputArray[count].partNumber, buffer1);
 			strcpy(outputArray[count].partNumberNoHyphens, buffer2);
@@ -68,10 +63,7 @@ static char** read_file_lines(const char* filename, size_t* outLineCount) {
 
 	// Allocate array of pointers for lines
 	char** lines = malloc(lineCount * sizeof(*lines));
-	if (!lines) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(lines);
 
 	// Second pass: read lines and store them
 	for (size_t i = 0; i < lineCount; i++) {
@@ -88,10 +80,7 @@ static char** read_file_lines(const char* filename, size_t* outLineCount) {
 		buffer[strcspn(buffer, "\r\n")] = '\0';
 
 		lines[i] = strdup(buffer);
-		if (!lines[i]) {
-			fprintf(stderr, "Memory allocation failed\n");
-			exit(EXIT_FAILURE);
-		}
+		assert(lines[i]);
 	}
 
 	fclose(file);
@@ -104,16 +93,10 @@ SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, 
 	MasterPart* masterParts = build_masterParts(masterPartNumbers, masterPartNumbersCount, 3, &masterPartsCount);
 
 	SourceData* data = (SourceData*)malloc(sizeof(*data));
-	if (!data) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(data);
 
 	Part* parts = malloc(partNumbersCount * sizeof(*parts));
-	if (!parts) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(parts);
 
 	for (size_t i = 0; i < partNumbersCount; i++) {
 		parts[i].partNumber = partNumbers[i];
@@ -144,31 +127,6 @@ SourceData* data_read(int argc, char* argv[]) {
 	char** masterPartNumbers = read_file_lines(masterPartFile, &masterPartNumbersCount);
 
 	return data_build(masterPartNumbers, masterPartNumbersCount, partNumbers, partNumbersCount);
-}
-
-void data_clean(SourceData* data) {
-	// We don't really need to clean anything here. We're just trying to mimic the actions in the real app.
-	for (size_t i = 0; i < data->masterPartsCount; i++) {
-		free(data->masterParts[i].partNumber);
-		data->masterParts[i].partNumber = NULL;
-		free(data->masterParts[i].partNumberNoHyphens);
-		data->masterParts[i].partNumberNoHyphens = NULL;
-	}
-	free(data->masterParts);
-	data->masterParts = NULL;
-
-	//for (size_t i = 0; i < data->masterPartNumbersCount; i++) {
-	//	free(data->masterPartNumbers[i]);
-	//	data->masterPartNumbers[i] = NULL;
-	//}
-	//for (size_t i = 0; i < data->partNumbersCount; i++) {
-	//	free(data->partNumbers[i]);
-	//	data->partNumbers[i] = NULL;
-	//}
-	//free(data->masterPartNumbers);
-	//data->masterPartNumbers = NULL;
-	//free(data->partNumbers);
-	//data->partNumbers = NULL;
 }
 
 void data_print(SourceData* data) {

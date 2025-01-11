@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "utils.h"
 #include "source_data.h"
 #include "processor.h"
@@ -45,17 +46,12 @@ static void forward_fill(size_t* array) {
 void processor_initialize(SourceData* data) {
 	masterPartsAsc = data->masterParts;
 	masterPartsCount = data->masterPartsCount;
+	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
 
 	masterPartsAscByNoHyphens = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
-	if (!masterPartsAscByNoHyphens) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	assert(masterPartsAscByNoHyphens);
 	memcpy(masterPartsAscByNoHyphens, masterPartsAsc, masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
-
-	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
 	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
-
 
 	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
 		startIndexByLengthAsc[i] = MAX_VALUE;

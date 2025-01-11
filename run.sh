@@ -11,7 +11,7 @@ if [ "$impl" = "" ]; then
 impl="1"
 fi
 
-FLAGS="-O3 -march=native -DNDEBUG -s -Wall -Wextra"
+FLAGS="-O3 -march=native -s -Wall -Wextra"
 FILES="main.c utils.c cross_platform_time.c hash_table.c source_data.c test.c processor$impl.c"
 
 if [ "$type" = "echo" ]; then

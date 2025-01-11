@@ -36,9 +36,9 @@ int main(int argc, char* argv[]) {
 		};
 
 		printf("Processor matching: \t\t%f seconds. Found %zu matches.\n", time_get_seconds() - start3, matchCount);
+		// We don't really need to clean anything here. We're just trying to mimic the actions in the real app.
 		processor_clean();
 		printf("Processor wall time: \t\t%f seconds.\n", time_get_seconds() - start2);
-		data_clean(data);
 		printf("Wall time: \t\t\t%f seconds.\n", time_get_seconds() - start);
 		return 0;
 	}

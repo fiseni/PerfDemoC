@@ -3,32 +3,16 @@
 #include <string.h>
 #include <ctype.h>
 #include <immintrin.h>
-#include "common.h"
-#include "processor.h"
+#include "utils.h"
+#include "source_data.h"
 
 #ifdef _MSC_VER
 #define strdup _strdup
 #endif
 
-void print_array(char* array[], size_t size) {
-	for (size_t i = 0; i < size; i++) {
-		printf("%s\n", array[i]);
-	}
-}
-
-void print_masterParts(MasterPart* masterParts, size_t masterPartsCount) {
-	for (size_t i = 0; i < masterPartsCount; i++) {
-		printf("%s\n", masterParts[i].partNumber);
-		printf("%s\n", masterParts[i].partNumberNoHyphens);
-	}
-
-	printf("#################################\n");
-}
-
 int compare_partNumber_length(const void* a, const void* b) {
 	size_t lenA = ((const MasterPart*)a)->partNumberLength;
 	size_t lenB = ((const MasterPart*)b)->partNumberLength;
-
 	// Compare lengths for ascending order
 	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
@@ -36,7 +20,6 @@ int compare_partNumber_length(const void* a, const void* b) {
 int compare_partNumber_length_desc(const void* a, const void* b) {
 	size_t lenA = ((const MasterPart*)a)->partNumberLength;
 	size_t lenB = ((const MasterPart*)b)->partNumberLength;
-
 	// Compare lengths for descending order
 	return lenA < lenB ? 1 : lenA > lenB ? -1 : 0;
 }
@@ -44,7 +27,6 @@ int compare_partNumber_length_desc(const void* a, const void* b) {
 int compare_partNumberNoHyphens_length(const void* a, const void* b) {
 	size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
 	size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
-
 	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
@@ -166,97 +148,4 @@ bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source
 	// For our use-case most of the time the strings are not equal.
 	// It turns out checking the first char before vectorization improves the performance.
 	return (endOfSource[0] == value[0] && strcmp_same_length_vectorized(endOfSource, value, lenValue) == 0);
-}
-
-
-
-MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outSize) {
-	MasterPart* outputArray = malloc(inputSize * sizeof(*outputArray));
-	if (!outputArray) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
-
-	size_t count = 0;
-	for (size_t i = 0; i < inputSize; i++) {
-		char* src = inputArray[i];
-
-		char buffer1[MAX_LINE_LEN];
-		to_upper_trim(src, buffer1, sizeof(buffer1));
-		size_t buffer1_len = strlen(buffer1);
-
-		if (buffer1_len >= minLen) {
-			char buffer2[MAX_LINE_LEN];
-			remove_char(buffer1, buffer2, sizeof(buffer2), '-');
-			size_t buffer2_len = strlen(buffer2);
-
-			outputArray[count].partNumberLength = (int)buffer1_len;
-			outputArray[count].partNumberNoHyphensLength = (int)buffer2_len;
-			outputArray[count].partNumber = malloc(buffer1_len + 1);
-			outputArray[count].partNumberNoHyphens = malloc(buffer2_len + 1);
-
-			if (!outputArray[count].partNumber || !outputArray[count].partNumberNoHyphens) {
-				fprintf(stderr, "Memory allocation failed\n");
-				exit(EXIT_FAILURE);
-			}
-
-			strcpy(outputArray[count].partNumber, buffer1);
-			strcpy(outputArray[count].partNumberNoHyphens, buffer2);
-
-			count++;
-		}
-	}
-
-	*outSize = count;
-	return outputArray;
-}
-
-char** read_file_lines(const char* filename, size_t* outLineCount) {
-	FILE* file = fopen(filename, "r");
-	if (!file) {
-		fprintf(stderr, "Failed to open file: %s\n", filename);
-		exit(EXIT_FAILURE);
-	}
-
-	// First pass: count lines
-	size_t lineCount = 0;
-	char buffer[MAX_LINE_LEN];
-	while (fgets(buffer, sizeof(buffer), file)) {
-		lineCount++;
-	}
-
-	// Rewind file pointer to beginning
-	rewind(file);
-
-	// Allocate array of pointers for lines
-	char** lines = malloc(lineCount * sizeof(*lines));
-	if (!lines) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
-
-	// Second pass: read lines and store them
-	for (size_t i = 0; i < lineCount; i++) {
-		if (!fgets(buffer, sizeof(buffer), file)) {
-			fprintf(stderr, "Failed to read line %zu\n", i);
-			exit(EXIT_FAILURE);
-		}
-
-		//size_t len = strlen(buffer);
-		//if (len > 0 && buffer[len - 1] == '\n')
-		//{
-		//	buffer[len - 1] = '\0';
-		//}
-		buffer[strcspn(buffer, "\r\n")] = '\0';
-
-		lines[i] = strdup(buffer);
-		if (!lines[i]) {
-			fprintf(stderr, "Memory allocation failed\n");
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	fclose(file);
-	*outLineCount = lineCount;
-	return lines;
 }

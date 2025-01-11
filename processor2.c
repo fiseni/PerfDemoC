@@ -1,14 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include "cross_platform_time.h"
-#include "common.h"
+#include "utils.h"
+#include "source_data.h"
 #include "processor.h"
 
 const size_t MAX_VALUE = ((size_t)-1);
 
-const char* get_identifier() {
+const char* processor_get_identifier() {
 	return "Processor2";
 }
 
@@ -18,9 +17,6 @@ size_t masterPartsCount = 0;
 size_t startIndexByLengthAsc[MAX_LINE_LEN + 1];
 size_t startIndexByLengthAscNoHyphens[MAX_LINE_LEN + 1];
 size_t startIndexByLengthDesc[MAX_LINE_LEN + 1];
-
-char** parts = NULL;
-size_t partsCount = 0;
 
 static void backward_fill(size_t* array) {
 	size_t tmp = array[MAX_LINE_LEN];
@@ -46,13 +42,11 @@ static void forward_fill(size_t* array) {
 	}
 }
 
-void initialize(MasterPart* masterParts, size_t count, char** partNumbers, size_t partNumbersCount) {
-	masterPartsAsc = masterParts;
-	masterPartsCount = count;
-	parts = partNumbers;
-	partsCount = partNumbersCount;
+void processor_initialize(SourceData* data) {
+	masterPartsAsc = data->masterParts;
+	masterPartsCount = data->masterPartsCount;
 
-	masterPartsAscByNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
+	masterPartsAscByNoHyphens = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
 	if (!masterPartsAscByNoHyphens) {
 		fprintf(stderr, "Memory allocation failed\n");
 		exit(EXIT_FAILURE);
@@ -88,7 +82,7 @@ void initialize(MasterPart* masterParts, size_t count, char** partNumbers, size_
 	forward_fill(startIndexByLengthDesc);
 }
 
-char* find_match(char* partNumber) {
+const char* processor_find_match(char* partNumber) {
 
 	if (partNumber == NULL) {
 		return NULL;
@@ -134,25 +128,9 @@ char* find_match(char* partNumber) {
 	return NULL;
 }
 
-size_t run() {
-
-	size_t matchCount = 0;
-	char* result = NULL;
-
-	for (size_t i = 0; i < partsCount; i++) {
-		result = find_match(parts[i]);
-
-		if (result) {
-			matchCount++;
-		}
-
-		//printf("PartNumber: %30s %30s\n", partNumbers[i], result);
-	};
-
+void processor_clean() {
 	if (masterPartsAscByNoHyphens) {
 		free(masterPartsAscByNoHyphens);
 		masterPartsAscByNoHyphens = NULL;
 	}
-
-	return matchCount;
 }

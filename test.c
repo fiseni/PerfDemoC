@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "common.h"
+#include "source_data.h"
 #include "processor.h"
+#include "utils.h"
 
 typedef struct PartTest {
 	char* expected;
@@ -67,7 +68,7 @@ static char** extract_partNumbers(size_t count) {
 	if (!partNumbers) {
 		fprintf(stderr, "Memory allocation failed\n");
 		exit(EXIT_FAILURE);
-	};
+	}
 	for (size_t i = 0; i < count; i++) {
 		partNumbers[i] = partsTest[i].partNumber;
 	};
@@ -78,14 +79,11 @@ void run_tests() {
 	size_t masterPartNumbersTestCount = sizeof(masterPartNumbersTest) / sizeof(masterPartNumbersTest[0]);
 	size_t partsTestCount = sizeof(partsTest) / sizeof(partsTest[0]);
 	char** partNumbers = extract_partNumbers(partsTestCount);
-
-	size_t masterPartsCount = 0;
-	MasterPart* masterParts = build_masterParts(masterPartNumbersTest, masterPartNumbersTestCount, 3, &masterPartsCount);
-
-	initialize(masterParts, masterPartsCount, partNumbers, partsTestCount);
+	SourceData* data = data_build(masterPartNumbersTest, masterPartNumbersTestCount, partNumbers, partsTestCount);
+	processor_initialize(data);
 
 	for (size_t i = 0; i < partsTestCount; i++) {
-		char* result = find_match(partsTest[i].partNumber);
+		const char* result = processor_find_match(partsTest[i].partNumber);
 
 		if (result == NULL && partsTest[i].expected == NULL) {
 			continue;

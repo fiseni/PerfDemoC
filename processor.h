@@ -1,9 +1,10 @@
 #ifndef PROCESSOR_H
 #define PROCESSOR_H
 
-const char* get_identifier();
-void initialize(MasterPart* masterParts, size_t count, char** partNumbers, size_t partNumbersCount);
-size_t run();
-char* find_match(char* partNumber);
+#include "source_data.h"
 
+const char* processor_get_identifier();
+const char* processor_find_match(char* partNumber);
+void processor_initialize(SourceData* data);
+void processor_clean();
 #endif

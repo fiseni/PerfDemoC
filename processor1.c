@@ -1,12 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include "cross_platform_time.h"
-#include "common.h"
+#include "utils.h"
+#include "source_data.h"
 #include "processor.h"
 
-const char* get_identifier() {
+const char* processor_get_identifier() {
 	return "Processor1";
 }
 
@@ -14,23 +13,19 @@ MasterPart* masterPartsAsc = NULL;
 MasterPart* masterPartsAscByNoHyphens = NULL;
 MasterPart* masterPartsDesc = NULL;
 size_t masterPartsCount = 0;
-char** parts = NULL;
-size_t partsCount = 0;
 
-void initialize(MasterPart* masterParts, size_t count, char** partNumbers, size_t partNumbersCount) {
-	masterPartsAsc = masterParts;
-	masterPartsCount = count;
-	parts = partNumbers;
-	partsCount = partNumbersCount;
+void processor_initialize(SourceData* data) {
+	masterPartsAsc = data->masterParts;
+	masterPartsCount = data->masterPartsCount;
 
-	masterPartsAscByNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
+	masterPartsAscByNoHyphens = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
 	if (!masterPartsAscByNoHyphens) {
 		fprintf(stderr, "Memory allocation failed\n");
 		exit(EXIT_FAILURE);
 	}
 	memcpy(masterPartsAscByNoHyphens, masterPartsAsc, masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
 
-	masterPartsDesc = malloc(masterPartsCount * sizeof(*masterPartsDesc));
+	masterPartsDesc = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsDesc));
 	if (!masterPartsDesc) {
 		fprintf(stderr, "Memory allocation failed\n");
 		exit(EXIT_FAILURE);
@@ -40,13 +35,9 @@ void initialize(MasterPart* masterParts, size_t count, char** partNumbers, size_
 	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_partNumber_length);
 	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_partNumberNoHyphens_length);
 	qsort(masterPartsDesc, masterPartsCount, sizeof(*masterPartsDesc), compare_partNumber_length_desc);
-
-	//print_masterParts(masterPartsAsc, masterPartsCount);
-	//print_masterParts(masterPartsAscByNoHyphens, masterPartsCount);
-	//print_masterParts(masterPartsDesc, masterPartsCount);
 }
 
-char* find_match(char* partNumber) {
+const char* processor_find_match(char* partNumber) {
 
 	if (partNumber == NULL) {
 		return NULL;
@@ -84,21 +75,7 @@ char* find_match(char* partNumber) {
 	return NULL;
 }
 
-size_t run() {
-
-	size_t matchCount = 0;
-	char* result = NULL;
-
-	for (size_t i = 0; i < partsCount; i++) {
-		result = find_match(parts[i]);
-
-		if (result) {
-			matchCount++;
-		}
-
-		//printf("PartNumber: %30s %30s\n", partNumbers[i], result);
-	};
-
+void processor_clean() {
 	if (masterPartsAscByNoHyphens) {
 		free(masterPartsAscByNoHyphens);
 		masterPartsAscByNoHyphens = NULL;
@@ -108,6 +85,4 @@ size_t run() {
 		free(masterPartsDesc);
 		masterPartsDesc = NULL;
 	}
-
-	return matchCount;
 }

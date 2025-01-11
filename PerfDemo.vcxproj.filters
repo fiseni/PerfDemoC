@@ -21,7 +21,7 @@
     <ClCompile Include="test.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="common.c">
+    <ClCompile Include="utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cross_platform_time.c">
@@ -36,6 +36,12 @@
     <ClCompile Include="hash_table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="processor4.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source_data.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="processor.h">
@@ -44,11 +50,17 @@
     <ClInclude Include="cross_platform_time.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="common.h">
+    <ClInclude Include="utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="hash_table.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="source_data.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

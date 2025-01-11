@@ -32,7 +32,7 @@ PartsInfo* partsInfo = NULL;
 
 static void backward_fill(size_t* array) {
 	size_t tmp = array[MAX_LINE_LEN];
-	for (int i = MAX_LINE_LEN; i >= 0; i--) {
+	for (int i = (int)MAX_LINE_LEN; i >= 0; i--) {
 		if (array[i] == MAX_VALUE) {
 			array[i] = tmp;
 		}
@@ -44,7 +44,7 @@ static void backward_fill(size_t* array) {
 
 static void forward_fill(size_t* array) {
 	size_t tmp = array[0];
-	for (int i = 0; i <= MAX_LINE_LEN; i++) {
+	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
 		if (array[i] == MAX_VALUE) {
 			array[i] = tmp;
 		}
@@ -85,7 +85,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t co
 	// Create start indices.
 	size_t startIndexByLength[MAX_LINE_LEN + 1] = { 0 };
 	size_t startIndexByLengthNoHyphens[MAX_LINE_LEN + 1] = { 0 };
-	for (int i = 0; i <= MAX_LINE_LEN; i++) {
+	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
 		startIndexByLength[i] = MAX_VALUE;
 		startIndexByLengthNoHyphens[i] = MAX_VALUE;
 	}
@@ -104,7 +104,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t co
 	backward_fill(startIndexByLengthNoHyphens);
 
 	// Create hash tables
-	for (int length = 0; length <= MAX_LINE_LEN; length++) {
+	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
 		HashTable* table = create_hash_table();
 
 		size_t startIndex = startIndexByLength[length];
@@ -119,7 +119,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t co
 		mpInfo->suffixesByLength[length] = table;
 	}
 
-	for (int length = 0; length <= MAX_LINE_LEN; length++) {
+	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
 		HashTable* table = create_hash_table();
 
 		size_t startIndex = startIndexByLengthNoHyphens[length];
@@ -137,7 +137,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t co
 	return mpInfo;
 }
 
-static PartsInfo* build_partsInfo(char* inputArray[], size_t inputSize, size_t minLen) {
+static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t minLen) {
 	Part* parts = malloc(inputSize * sizeof(*parts));
 	if (!parts) {
 		fprintf(stderr, "Memory allocation failed\n");
@@ -146,7 +146,7 @@ static PartsInfo* build_partsInfo(char* inputArray[], size_t inputSize, size_t m
 
 	size_t count = 0;
 	for (size_t i = 0; i < inputSize; i++) {
-		char* src = inputArray[i];
+		char* src = inputArray[i].partNumber;
 
 		char buffer[MAX_LINE_LEN];
 		to_upper_trim(src, buffer, sizeof(buffer));
@@ -175,7 +175,7 @@ static PartsInfo* build_partsInfo(char* inputArray[], size_t inputSize, size_t m
 	partsInfo->partsCount = count;
 
 	// Populate the start indices
-	for (int i = 0; i <= MAX_LINE_LEN; i++) {
+	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
 		partsInfo->startIndexByLengthDesc[i] = MAX_VALUE;
 	}
 	for (size_t i = 0; i < masterPartsInfo->masterPartsCount; i++) {
@@ -189,7 +189,7 @@ static PartsInfo* build_partsInfo(char* inputArray[], size_t inputSize, size_t m
 
 void processor_initialize(SourceData* data) {
 	masterPartsInfo = build_masterPartsInfo(data->masterParts, data->masterPartsCount);
-	partsInfo = build_partsInfo(data->partNumbers, data->partNumbersCount, 3);
+	partsInfo = build_partsInfo(data->parts, data->partsCount, 3);
 
 	dictionary = create_hash_table();
 

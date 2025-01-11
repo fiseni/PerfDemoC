@@ -20,7 +20,7 @@ size_t startIndexByLengthDesc[MAX_LINE_LEN + 1];
 
 static void backward_fill(size_t* array) {
 	size_t tmp = array[MAX_LINE_LEN];
-	for (int i = MAX_LINE_LEN; i >= 0; i--) {
+	for (int i = (int)MAX_LINE_LEN; i >= 0; i--) {
 		if (array[i] == MAX_VALUE) {
 			array[i] = tmp;
 		}
@@ -32,7 +32,7 @@ static void backward_fill(size_t* array) {
 
 static void forward_fill(size_t* array) {
 	size_t tmp = array[0];
-	for (int i = 0; i <= MAX_LINE_LEN; i++) {
+	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
 		if (array[i] == MAX_VALUE) {
 			array[i] = tmp;
 		}
@@ -57,7 +57,7 @@ void processor_initialize(SourceData* data) {
 	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_partNumberNoHyphens_length);
 
 
-	for (int i = 0; i <= MAX_LINE_LEN; i++) {
+	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
 		startIndexByLengthAsc[i] = MAX_VALUE;
 		startIndexByLengthAscNoHyphens[i] = MAX_VALUE;
 		startIndexByLengthDesc[i] = MAX_VALUE;

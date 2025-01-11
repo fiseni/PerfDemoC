@@ -1,7 +1,7 @@
 #!/bin/bash
 
-impl="$1"
-type="$2"
+type="$1"
+impl="$2"
 
 if [ "$type" = "" ]; then
 type="test"
@@ -11,4 +11,11 @@ if [ "$impl" = "" ]; then
 impl="1"
 fi
 
-gcc -O3 -mavx2 -msse2 -o demo main.c utils.c cross_platform_time.c hash_table.c source_data.c test.c processor$impl.c && ./demo $type
+FLAGS="-O3 -march=native -DNDEBUG -s -Wall -Wextra"
+FILES="main.c utils.c cross_platform_time.c hash_table.c source_data.c test.c processor$impl.c"
+
+if [ "$type" = "echo" ]; then
+echo gcc $FLAGS $FILES -o demo
+else
+gcc $FLAGS $FILES -o demo && ./demo $type
+fi

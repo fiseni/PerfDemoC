@@ -1,16 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>	
 #include "source_data.h"
 #include "processor.h"
 #include "utils.h"
 
-typedef struct PartTest {
+typedef struct TestPart {
 	char* expected;
 	char* partNumber;
-} PartTest;
+} TestPart;
 
-PartTest partsTest[] =
+TestPart testParts[] =
 {
 	// expected, partNumber
 	{NULL, "  "},
@@ -40,7 +41,7 @@ PartTest partsTest[] =
 	{"XSSD-DFF", "XSSDDFF"},
 };
 
-char* masterPartNumbersTest[] =
+char* testMasterPartNumbers[] =
 {
 	"Aqwertyuio",
 	"QWERTYUIO",
@@ -63,37 +64,30 @@ char* masterPartNumbersTest[] =
 	""
 };
 
-static char** extract_partNumbers(size_t count) {
-	char** partNumbers = malloc(count * sizeof(char*));
-	if (!partNumbers) {
-		fprintf(stderr, "Memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
-	for (size_t i = 0; i < count; i++) {
-		partNumbers[i] = partsTest[i].partNumber;
-	};
-	return partNumbers;
-}
-
 void run_tests() {
-	size_t masterPartNumbersTestCount = sizeof(masterPartNumbersTest) / sizeof(masterPartNumbersTest[0]);
-	size_t partsTestCount = sizeof(partsTest) / sizeof(partsTest[0]);
-	char** partNumbers = extract_partNumbers(partsTestCount);
-	SourceData* data = data_build(masterPartNumbersTest, masterPartNumbersTestCount, partNumbers, partsTestCount);
+	size_t testMasterPartNumbersCount = sizeof(testMasterPartNumbers) / sizeof(testMasterPartNumbers[0]);
+	size_t testPartsCount = sizeof(testParts) / sizeof(testParts[0]);
+	char** testPartNumbers = malloc(testPartsCount * sizeof(char*));
+	assert(testPartNumbers);
+	for (size_t i = 0; i < testPartsCount; i++) {
+		testPartNumbers[i] = testParts[i].partNumber;
+	};
+
+	SourceData* data = data_build(testMasterPartNumbers, testMasterPartNumbersCount, testPartNumbers, testPartsCount);
 	processor_initialize(data);
 
-	for (size_t i = 0; i < partsTestCount; i++) {
-		const char* result = processor_find_match(partsTest[i].partNumber);
+	for (size_t i = 0; i < testPartsCount; i++) {
+		const char* result = processor_find_match(testParts[i].partNumber);
 
-		if (result == NULL && partsTest[i].expected == NULL) {
+		if (result == NULL && testParts[i].expected == NULL) {
 			continue;
 		}
 
-		if (result != NULL && partsTest[i].expected != NULL && strcmp(result, partsTest[i].expected) == 0) {
+		if (result != NULL && testParts[i].expected != NULL && strcmp(result, testParts[i].expected) == 0) {
 			continue;
 		}
 
-		printf("Failed at: %s | Expected: %s | Found: %s\n", partsTest[i].partNumber, partsTest[i].expected, result);
+		printf("Failed at: %s | Expected: %s | Found: %s\n", testParts[i].partNumber, testParts[i].expected, result);
 		return;
 	};
 

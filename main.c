@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 		double start = get_time_seconds();
 		SourceData* data = data_read(argc, argv);
 		printf("MasterParts Count: \t%zu\n", data->masterPartsCount);
-		printf("Parts Count: \t\t%zu\n\n", data->partNumbersCount);
+		printf("Parts Count: \t\t%zu\n\n", data->partsCount);
 		printf("Main initialization: \t\t%f seconds.\n", get_time_seconds() - start);
 
 		double start2 = get_time_seconds();
@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
 		double start3 = get_time_seconds();
 		size_t matchCount = 0;
 		const char* result = NULL;
-		for (size_t i = 0; i < data->partNumbersCount; i++) {
-			result = processor_find_match(data->partNumbers[i]);
+		for (size_t i = 0; i < data->partsCount; i++) {
+			result = processor_find_match(data->parts[i].partNumber);
 			if (result) {
 				matchCount++;
 			}

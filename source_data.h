@@ -19,8 +19,8 @@ typedef struct Part {
 typedef struct SourceData {
 	MasterPart* masterParts;
 	size_t masterPartsCount;
-	char** partNumbers;
-	size_t partNumbersCount;
+	Part* parts;
+	size_t partsCount;
 } SourceData;
 
 SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, char** partNumbers, size_t partNumbersCount);

@@ -108,10 +108,22 @@ SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, 
 		fprintf(stderr, "Memory allocation failed\n");
 		exit(EXIT_FAILURE);
 	}
+
+	Part* parts = malloc(partNumbersCount * sizeof(*parts));
+	if (!parts) {
+		fprintf(stderr, "Memory allocation failed\n");
+		exit(EXIT_FAILURE);
+	}
+
+	for (size_t i = 0; i < partNumbersCount; i++) {
+		parts[i].partNumber = partNumbers[i];
+		parts[i].partNumberLength = (int)strlen(partNumbers[i]);
+	}
+
 	data->masterParts = masterParts;
 	data->masterPartsCount = masterPartsCount;
-	data->partNumbers = partNumbers;
-	data->partNumbersCount = partNumbersCount;
+	data->parts = parts;
+	data->partsCount = partNumbersCount;
 
 	return data;
 }

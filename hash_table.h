@@ -13,10 +13,9 @@ typedef struct HashTable {
     Entry* buckets[TABLE_SIZE];
 } HashTable;
 
-HashTable* create_hash_table();
-void insert_if_not_exists(HashTable* table, const char* key, const char* value);
-const char* search(HashTable* table, const char* key);
-int delete_entry(HashTable* table, const char* key);
-void free_table(HashTable* table);
+HashTable* htable_string_create();
+const char* htable_string_search(HashTable* table, const char* key);
+void htable_string_insert_if_not_exists(HashTable* table, const char* key, const char* value);
+void htable_string_free(HashTable* table);
 
 #endif

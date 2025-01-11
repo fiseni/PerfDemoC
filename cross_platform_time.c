@@ -4,7 +4,7 @@
 
 #include <windows.h>
 
-double get_time_seconds(void) {
+double time_get_seconds(void) {
 	static LARGE_INTEGER frequency;
 	static int initialized = 0;
 
@@ -27,13 +27,13 @@ double get_time_seconds(void) {
 #include <sys/time.h>
 #include <stddef.h>
 
-//double get_time_seconds(void) {
+//double time_get_seconds(void) {
 //    struct timespec now;
 //    clock_gettime(CLOCK_MONOTONIC, &now);
 //    return (double)now.tv_sec + (double)now.tv_nsec / 1e9;
 //}
 
-double get_time_seconds(void) {
+double time_get_seconds(void) {
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	return (double)now.tv_sec + (double)now.tv_usec / 1000000.0;

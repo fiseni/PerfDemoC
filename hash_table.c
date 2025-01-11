@@ -10,7 +10,7 @@ static unsigned int hash(const char* key) {
     return hash % TABLE_SIZE;
 }
 
-HashTable* create_hash_table() {
+HashTable* htable_string_create() {
     HashTable* table = malloc(sizeof(HashTable));
     if (table) {
         for (int i = 0; i < TABLE_SIZE; i++)
@@ -31,12 +31,12 @@ static const char* search_internal(HashTable* table, const char* key, unsigned i
     return NULL;
 }
 
-const char* search(HashTable* table, const char* key) {
+const char* htable_string_search(HashTable* table, const char* key) {
     unsigned int index = hash(key);
     return search_internal(table, key, index);
 }
 
-void insert_if_not_exists(HashTable* table, const char* key, const char* value) {
+void htable_string_insert_if_not_exists(HashTable* table, const char* key, const char* value) {
     unsigned int index = hash(key);
     const char* existing_value = search_internal(table, key, index);
     if (existing_value) {
@@ -54,29 +54,7 @@ void insert_if_not_exists(HashTable* table, const char* key, const char* value) 
     table->buckets[index] = new_entry;
 }
 
-int delete_entry(HashTable* table, const char* key) {
-    unsigned int index = hash(key);
-    Entry* entry = table->buckets[index];
-    Entry* prev = NULL;
-
-    while (entry) {
-        if (strcmp(entry->key, key) == 0) {
-            if (prev) {
-                prev->next = entry->next;
-            }
-            else {
-                table->buckets[index] = entry->next;
-            }
-            free(entry);
-            return 1; // Successfully deleted
-        }
-        prev = entry;
-        entry = entry->next;
-    }
-    return 0; // Key not found
-}
-
-void free_table(HashTable* table) {
+void htable_string_free(HashTable* table) {
     for (int i = 0; i < TABLE_SIZE; i++) {
         Entry* entry = table->buckets[i];
         while (entry) {

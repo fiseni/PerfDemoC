@@ -14,17 +14,17 @@ int main(int argc, char* argv[]) {
 		run_tests();
 	}
 	else {
-		double start = get_time_seconds();
+		double start = time_get_seconds();
 		SourceData* data = data_read(argc, argv);
 		printf("MasterParts Count: \t%zu\n", data->masterPartsCount);
 		printf("Parts Count: \t\t%zu\n\n", data->partsCount);
-		printf("Main initialization: \t\t%f seconds.\n", get_time_seconds() - start);
+		printf("Main initialization: \t\t%f seconds.\n", time_get_seconds() - start);
 
-		double start2 = get_time_seconds();
+		double start2 = time_get_seconds();
 		processor_initialize(data);
-		printf("Processor initialization: \t%f seconds.\n", get_time_seconds() - start2);
+		printf("Processor initialization: \t%f seconds.\n", time_get_seconds() - start2);
 
-		double start3 = get_time_seconds();
+		double start3 = time_get_seconds();
 		size_t matchCount = 0;
 		const char* result = NULL;
 		for (size_t i = 0; i < data->partsCount; i++) {
@@ -35,11 +35,11 @@ int main(int argc, char* argv[]) {
 			//printf("PartNumber: %30s %30s\n", data->partNumbers[i], result);
 		};
 
-		printf("Processor matching: \t\t%f seconds. Found %zu matches.\n", get_time_seconds() - start3, matchCount);
+		printf("Processor matching: \t\t%f seconds. Found %zu matches.\n", time_get_seconds() - start3, matchCount);
 		processor_clean();
-		printf("Processor wall time: \t\t%f seconds.\n", get_time_seconds() - start2);
+		printf("Processor wall time: \t\t%f seconds.\n", time_get_seconds() - start2);
 		data_clean(data);
-		printf("Wall time: \t\t\t%f seconds.\n", get_time_seconds() - start);
+		printf("Wall time: \t\t\t%f seconds.\n", time_get_seconds() - start);
 		return 0;
 	}
 }

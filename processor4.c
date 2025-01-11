@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "hash_table.h"
 #include "source_data.h"
+#include "cross_platform_time.h"
 #include "processor.h"
 
 const size_t MAX_VALUE = ((size_t)-1);
@@ -55,29 +56,27 @@ static void forward_fill(size_t* array) {
 	}
 }
 
-static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t count) {
-	MasterPart* masterPartsNoHyphens = malloc(count * sizeof(*masterPartsNoHyphens));
+static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t masterPartsCount) {
+	qsort(masterParts, masterPartsCount, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
+	MasterPart* masterPartsNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsNoHyphens));
 	assert(masterPartsNoHyphens);
-	memcpy(masterPartsNoHyphens, masterParts, count * sizeof(*masterPartsNoHyphens));
-
-	qsort(masterParts, count, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
-	qsort(masterPartsNoHyphens, count, sizeof(*masterPartsNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
+	memcpy(masterPartsNoHyphens, masterParts, masterPartsCount * sizeof(*masterPartsNoHyphens));
+	qsort(masterPartsNoHyphens, masterPartsCount, sizeof(*masterPartsNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
 
 	MasterPartsInfo* mpInfo = malloc(sizeof(*mpInfo));
 	assert(mpInfo);
 	mpInfo->masterParts = masterParts;
 	mpInfo->masterPartsNoHyphens = masterPartsNoHyphens;
-	mpInfo->masterPartsCount = count;
+	mpInfo->masterPartsCount = masterPartsCount;
 
-	// Create start indices.
+	// Create and populate start indices.
 	size_t startIndexByLength[MAX_LINE_LEN + 1] = { 0 };
 	size_t startIndexByLengthNoHyphens[MAX_LINE_LEN + 1] = { 0 };
 	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
 		startIndexByLength[i] = MAX_VALUE;
 		startIndexByLengthNoHyphens[i] = MAX_VALUE;
 	}
-	// Populate the start indices
-	for (size_t i = 0; i < count; i++) {
+	for (size_t i = 0; i < masterPartsCount; i++) {
 		size_t length = masterParts[i].partNumberLength;
 		if (startIndexByLength[length] == MAX_VALUE) {
 			startIndexByLength[length] = i;
@@ -96,28 +95,25 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t co
 
 		size_t startIndex = startIndexByLength[length];
 		if (startIndex != MAX_VALUE) {
-			for (size_t i = startIndex; i < count; i++) {
+			for (size_t i = startIndex; i < masterPartsCount; i++) {
 				MasterPart mp = masterParts[i];
 				char* suffix = mp.partNumber + (mp.partNumberLength - length);
 				htable_string_insert_if_not_exists(table, suffix, mp.partNumber);
 			}
 		}
-
 		mpInfo->suffixesByLength[length] = table;
 	}
-
 	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
 		HashTable* table = htable_string_create();
 
 		size_t startIndex = startIndexByLengthNoHyphens[length];
 		if (startIndex != MAX_VALUE) {
-			for (size_t i = startIndex; i < count; i++) {
+			for (size_t i = startIndex; i < masterPartsCount; i++) {
 				MasterPart mp = masterPartsNoHyphens[i];
 				char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - length);
 				htable_string_insert_if_not_exists(table, suffix, mp.partNumber);
 			}
 		}
-
 		mpInfo->suffixesByNoHyphensLength[length] = table;
 	}
 
@@ -172,20 +168,20 @@ void processor_initialize(SourceData* data) {
 	dictionary = htable_string_create();
 
 	for (size_t i = 0; i < partsInfo->partsCount; i++) {
-		Part* part = &partsInfo->parts[i];
+		Part part = partsInfo->parts[i];
 
-		HashTable* masterPartsBySuffix = masterPartsInfo->suffixesByLength[part->partNumberLength];
+		HashTable* masterPartsBySuffix = masterPartsInfo->suffixesByLength[part.partNumberLength];
 		if (masterPartsBySuffix) {
-			const char* match = htable_string_search(masterPartsBySuffix, part->partNumber);
+			const char* match = htable_string_search(masterPartsBySuffix, part.partNumber);
 			if (match) {
-				htable_string_insert_if_not_exists(dictionary, part->partNumber, match);
+				htable_string_insert_if_not_exists(dictionary, part.partNumber, match);
 			}
 		}
-		masterPartsBySuffix = masterPartsInfo->suffixesByNoHyphensLength[part->partNumberLength];
+		masterPartsBySuffix = masterPartsInfo->suffixesByNoHyphensLength[part.partNumberLength];
 		if (masterPartsBySuffix) {
-			const char* match = htable_string_search(masterPartsBySuffix, part->partNumber);
+			const char* match = htable_string_search(masterPartsBySuffix, part.partNumber);
 			if (match) {
-				htable_string_insert_if_not_exists(dictionary, part->partNumber, match);
+				htable_string_insert_if_not_exists(dictionary, part.partNumber, match);
 			}
 		}
 	}

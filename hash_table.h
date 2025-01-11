@@ -1,7 +1,7 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
-#define TABLE_SIZE 10000
+#define TABLE_SIZE 1000000
 
 typedef struct Entry {
     const char* key;

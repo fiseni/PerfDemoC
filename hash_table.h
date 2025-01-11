@@ -3,19 +3,19 @@
 
 #define TABLE_SIZE 1000000
 
-typedef struct Entry {
+typedef struct EntryString {
     const char* key;
     const char* value;
-    struct Entry* next;
-} Entry;
+    struct EntryString* next;
+} EntryString;
 
-typedef struct HashTable {
-    Entry* buckets[TABLE_SIZE];
-} HashTable;
+typedef struct HTableString {
+    EntryString* buckets[TABLE_SIZE];
+} HTableString;
 
-HashTable* htable_string_create();
-const char* htable_string_search(HashTable* table, const char* key);
-void htable_string_insert_if_not_exists(HashTable* table, const char* key, const char* value);
-void htable_string_free(HashTable* table);
+HTableString* htable_string_create();
+const char* htable_string_search(HTableString* table, const char* key);
+void htable_string_insert_if_not_exists(HTableString* table, const char* key, const char* value);
+void htable_string_free(HTableString* table);
 
 #endif

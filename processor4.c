@@ -23,12 +23,12 @@ typedef struct PartsInfo {
 typedef struct MasterPartsInfo {
 	MasterPart* masterParts;
 	MasterPart* masterPartsNoHyphens;
-	HashTable* suffixesByLength[MAX_LINE_LEN + 1];
-	HashTable* suffixesByNoHyphensLength[MAX_LINE_LEN + 1];
+	HTableString* suffixesByLength[MAX_LINE_LEN + 1];
+	HTableString* suffixesByNoHyphensLength[MAX_LINE_LEN + 1];
 	size_t masterPartsCount;
 } MasterPartsInfo;;
 
-HashTable* dictionary = NULL;
+HTableString* dictionary = NULL;
 MasterPartsInfo* masterPartsInfo = NULL;
 PartsInfo* partsInfo = NULL;
 
@@ -91,7 +91,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
 
 	// Create hash tables
 	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
-		HashTable* table = htable_string_create();
+		HTableString* table = htable_string_create();
 
 		size_t startIndex = startIndexByLength[length];
 		if (startIndex != MAX_VALUE) {
@@ -104,7 +104,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
 		mpInfo->suffixesByLength[length] = table;
 	}
 	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
-		HashTable* table = htable_string_create();
+		HTableString* table = htable_string_create();
 
 		size_t startIndex = startIndexByLengthNoHyphens[length];
 		if (startIndex != MAX_VALUE) {
@@ -127,7 +127,6 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
 	size_t count = 0;
 	for (size_t i = 0; i < inputSize; i++) {
 		char* src = inputArray[i].partNumber;
-
 		char buffer[MAX_LINE_LEN];
 		to_upper_trim(src, buffer, sizeof(buffer));
 		size_t buffer_len = strlen(buffer);
@@ -170,7 +169,7 @@ void processor_initialize(SourceData* data) {
 	for (size_t i = 0; i < partsInfo->partsCount; i++) {
 		Part part = partsInfo->parts[i];
 
-		HashTable* masterPartsBySuffix = masterPartsInfo->suffixesByLength[part.partNumberLength];
+		HTableString* masterPartsBySuffix = masterPartsInfo->suffixesByLength[part.partNumberLength];
 		if (masterPartsBySuffix) {
 			const char* match = htable_string_search(masterPartsBySuffix, part.partNumber);
 			if (match) {

@@ -4,31 +4,10 @@
 #include <ctype.h>
 #include <immintrin.h>
 #include "utils.h"
-#include "source_data.h"
 
 #ifdef _MSC_VER
 #define strdup _strdup
 #endif
-
-int compare_partNumber_length(const void* a, const void* b) {
-	size_t lenA = ((const MasterPart*)a)->partNumberLength;
-	size_t lenB = ((const MasterPart*)b)->partNumberLength;
-	// Compare lengths for ascending order
-	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
-}
-
-int compare_partNumber_length_desc(const void* a, const void* b) {
-	size_t lenA = ((const MasterPart*)a)->partNumberLength;
-	size_t lenB = ((const MasterPart*)b)->partNumberLength;
-	// Compare lengths for descending order
-	return lenA < lenB ? 1 : lenA > lenB ? -1 : 0;
-}
-
-int compare_partNumberNoHyphens_length(const void* a, const void* b) {
-	size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
-	size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
-	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
-}
 
 void to_upper_trim(char* src, char* buffer, size_t bufferSize) {
 	if (src == NULL || buffer == NULL || bufferSize == 0) {

@@ -32,9 +32,9 @@ void processor_initialize(SourceData* data) {
 	}
 	memcpy(masterPartsDesc, masterPartsAsc, masterPartsCount * sizeof(*masterPartsDesc));
 
-	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_partNumber_length);
-	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_partNumberNoHyphens_length);
-	qsort(masterPartsDesc, masterPartsCount, sizeof(*masterPartsDesc), compare_partNumber_length_desc);
+	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
+	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
+	qsort(masterPartsDesc, masterPartsCount, sizeof(*masterPartsDesc), compare_mp_by_partNumber_length_desc);
 }
 
 const char* processor_find_match(char* partNumber) {

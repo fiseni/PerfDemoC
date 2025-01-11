@@ -53,8 +53,8 @@ void processor_initialize(SourceData* data) {
 	}
 	memcpy(masterPartsAscByNoHyphens, masterPartsAsc, masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
 
-	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_partNumber_length);
-	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_partNumberNoHyphens_length);
+	qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
+	qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
 
 
 	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {

@@ -179,3 +179,31 @@ void data_print(SourceData* data) {
 
 	printf("#################################\n");
 }
+
+int compare_mp_by_partNumber_length_asc(const void* a, const void* b) {
+	size_t lenA = ((const MasterPart*)a)->partNumberLength;
+	size_t lenB = ((const MasterPart*)b)->partNumberLength;
+	// Compare lengths for ascending order
+	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+}
+
+int compare_mp_by_partNumber_length_desc(const void* a, const void* b) {
+	size_t lenA = ((const MasterPart*)a)->partNumberLength;
+	size_t lenB = ((const MasterPart*)b)->partNumberLength;
+	// Compare lengths for descending order
+	return lenA < lenB ? 1 : lenA > lenB ? -1 : 0;
+}
+
+int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b) {
+	size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
+	size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
+	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+}
+
+int compare_part_by_partNumber_length_asc(const void* a, const void* b) {
+	size_t lenA = ((const Part*)a)->partNumberLength;
+	size_t lenB = ((const Part*)b)->partNumberLength;
+
+	// Compare lengths for ascending order
+	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+}

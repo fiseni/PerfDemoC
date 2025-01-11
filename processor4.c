@@ -54,14 +54,6 @@ static void forward_fill(size_t* array) {
 	}
 }
 
-static int compare_part_length(const void* a, const void* b) {
-	size_t lenA = ((const Part*)a)->partNumberLength;
-	size_t lenB = ((const Part*)b)->partNumberLength;
-
-	// Compare lengths for ascending order
-	return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
-}
-
 static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t count) {
 	MasterPart* masterPartsNoHyphens = malloc(count * sizeof(*masterPartsNoHyphens));
 	if (!masterPartsNoHyphens) {
@@ -70,8 +62,8 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t co
 	}
 	memcpy(masterPartsNoHyphens, masterParts, count * sizeof(*masterPartsNoHyphens));
 
-	qsort(masterParts, count, sizeof(*masterParts), compare_partNumber_length);
-	qsort(masterPartsNoHyphens, count, sizeof(*masterPartsNoHyphens), compare_partNumberNoHyphens_length);
+	qsort(masterParts, count, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
+	qsort(masterPartsNoHyphens, count, sizeof(*masterPartsNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
 
 	MasterPartsInfo* mpInfo = malloc(sizeof(*mpInfo));
 	if (!mpInfo) {
@@ -164,7 +156,7 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
 			count++;
 		}
 	}
-	qsort(parts, count, sizeof(*parts), compare_part_length);
+	qsort(parts, count, sizeof(*parts), compare_part_by_partNumber_length_asc);
 
 	PartsInfo* partsInfo = malloc(sizeof(*partsInfo));
 	if (!partsInfo) {

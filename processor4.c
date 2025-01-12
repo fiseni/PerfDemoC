@@ -78,6 +78,10 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
 	backward_fill(startIndexByLengthNoHyphens);
 
 	// Create hash tables
+	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
+		mpInfo->suffixesByLength[length] = NULL;
+		mpInfo->suffixesByNoHyphensLength[length] = NULL;
+	}
 	for (size_t length = 3; length <= MAX_LINE_LEN; length++) {
 		HTableString* table = NULL;
 		size_t startIndex = startIndexByLength[length];
@@ -152,7 +156,11 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
 	}
 	backward_fill(startIndexByLength);
 
-	for (size_t length = 4; length < MAX_LINE_LEN; length++) {
+	// Create hash tables
+	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
+		partsInfo->suffixesByLength[length] = NULL;
+	}
+	for (size_t length = 3; length < MAX_LINE_LEN; length++) {
 		HTableStringList* table = NULL;
 		size_t startIndex = startIndexByLength[length];
 		if (startIndex != MAX_VALUE) {

@@ -18,9 +18,9 @@ const char* htable_string_search(HTableString* table, const char* key, int keyLe
 void htable_string_insert_if_not_exists(HTableString* table, const char* key, int keyLength, const char* value);
 void htable_string_free(HTableString* table);
 
-#define TABLE_SIZE2 1048576
+//#define TABLE_SIZE2 1048576
 //#define TABLE_SIZE2 524288
-//#define TABLE_SIZE2 262144
+#define TABLE_SIZE2 262144
 //#define TABLE_SIZE2 131072
 //#define TABLE_SIZE2 65536
 

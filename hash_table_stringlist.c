@@ -8,7 +8,7 @@
 //	unsigned int hash = 0;
 //	while (*key)
 //		hash = (hash * 31) + *key++;
-//	return hash & (TABLE_SIZE - 1);
+//	return hash & (TABLE_SIZE2 - 1);
 //}
 
 static unsigned int hash(const char* key, int keyLength) {
@@ -16,7 +16,7 @@ static unsigned int hash(const char* key, int keyLength) {
 	for (int i = 0; i < keyLength; i++) {
 		hash = (hash * 31) + key[i];
 	}
-	return hash & (TABLE_SIZE - 1);
+	return hash & (TABLE_SIZE2 - 1);
 }
 
 static StringList* stringlist_create() {
@@ -41,7 +41,7 @@ static void stringlist_add(StringList* list, const char* value) {
 HTableStringList* htable_stringlist_create() {
 	HTableStringList* table = malloc(sizeof(HTableStringList));
 	assert(table);
-	for (size_t i = 0; i < TABLE_SIZE; i++) {
+	for (size_t i = 0; i < TABLE_SIZE2; i++) {
 		table->buckets[i] = NULL;
 	}
 	return table;
@@ -97,7 +97,7 @@ static void stringlist_free(StringList* list) {
 }
 
 void htable_stringlist_free(HTableStringList* table) {
-	for (size_t i = 0; i < TABLE_SIZE; i++) {
+	for (size_t i = 0; i < TABLE_SIZE2; i++) {
 		EntryStringList* entry = table->buckets[i];
 		while (entry) {
 			EntryStringList* temp = entry;
@@ -111,26 +111,3 @@ void htable_stringlist_free(HTableStringList* table) {
 	}
 	free(table);
 }
-
-//// Example usage
-//int main() {
-//    HTableStringList* table = htable_stringlist_create();
-//
-//    htable_stringlist_insert_if_not_exists(table, "key1", "value1");
-//    htable_stringlist_insert_if_not_exists(table, "key1", "value2");
-//    htable_stringlist_insert_if_not_exists(table, "key2", "value3");
-//
-//    const StringList* list = htable_stringlist_search_list(table, "key1");
-//    if (list) {
-//        printf("Values for key1:\n");
-//        for (size_t i = 0; i < list->count; i++) {
-//            printf("%s\n", list->strings[i]);
-//        }
-//    }
-//    else {
-//        printf("Key not found\n");
-//    }
-//
-//    htable_stringlist_free(table);
-//    return 0;
-//}

@@ -79,26 +79,6 @@ static int strcmp_same_length_vectorized(const char* s1, const char* s2, size_t 
 		}
 	}
 
-	// The overhead of it for 8 bytes is not worth it. I didn't notice any performance improvement.
-	// Process 8 bytes at a time using SSE2
-	/*
-	for (; i + 7 < length; i += 8) {
-		// Load 8 bytes into the lower half of a 128-bit register
-		__m128i chunk1 = _mm_loadl_epi64((const __m128i*)(s1 + i));
-		__m128i chunk2 = _mm_loadl_epi64((const __m128i*)(s2 + i));
-
-		// Compare the two chunks byte-wise
-		__m128i cmp = _mm_cmpeq_epi8(chunk1, chunk2);
-
-		// Create a mask from the comparison (only lower 8 bits are relevant)
-		int mask = _mm_movemask_epi8(cmp) & 0xFF;
-
-		if (mask != 0xFF) {
-			return 1; // Strings differ
-		}
-	}
-	*/
-
 	// Compare any remaining bytes
 	for (; i < length; i++) {
 		if (s1[i] != s2[i]) {

@@ -4,11 +4,12 @@
 #include <assert.h>
 #include "hash_table.h"
 
-static unsigned int hash(const char* key) {
+static unsigned int hash(const char* key, int keyLength) {
 	unsigned int hash = 0;
-	while (*key)
-		hash = (hash * 31) + *key++;
-	return hash % TABLE_SIZE;
+	for (int i = 0; i < keyLength; i++) {
+		hash = (hash * 31) + key[i];
+	}
+	return hash & (TABLE_SIZE - 1);
 }
 
 HTableString* htable_string_create() {
@@ -31,13 +32,13 @@ static const char* search_internal(HTableString* table, const char* key, unsigne
 	return NULL;
 }
 
-const char* htable_string_search(HTableString* table, const char* key) {
-	unsigned int index = hash(key);
+const char* htable_string_search(HTableString* table, const char* key, int keyLength) {
+	unsigned int index = hash(key, keyLength);
 	return search_internal(table, key, index);
 }
 
-void htable_string_insert_if_not_exists(HTableString* table, const char* key, const char* value) {
-	unsigned int index = hash(key);
+void htable_string_insert_if_not_exists(HTableString* table, const char* key, int keyLength, const char* value) {
+	unsigned int index = hash(key, keyLength);
 	const char* existing_value = search_internal(table, key, index);
 	if (existing_value) {
 		return;

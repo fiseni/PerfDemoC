@@ -90,28 +90,32 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
 	backward_fill(startIndexByLengthNoHyphens);
 
 	// Create hash tables
-	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
-		HTableString* table = htable_string_create();
-
+	for (size_t length = 3; length <= MAX_LINE_LEN; length++) {
+		HTableString* table = NULL;
 		size_t startIndex = startIndexByLength[length];
 		if (startIndex != MAX_VALUE) {
+			if (!table) {
+				table = htable_string_create();
+			}
 			for (size_t i = startIndex; i < masterPartsCount; i++) {
 				MasterPart mp = masterParts[i];
 				char* suffix = mp.partNumber + (mp.partNumberLength - length);
-				htable_string_insert_if_not_exists(table, suffix, mp.partNumber);
+				htable_string_insert_if_not_exists(table, suffix, length, mp.partNumber);
 			}
 		}
 		mpInfo->suffixesByLength[length] = table;
 	}
-	for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
-		HTableString* table = htable_string_create();
-
+	for (size_t length = 3; length <= MAX_LINE_LEN; length++) {
+		HTableString* table = NULL;
 		size_t startIndex = startIndexByLengthNoHyphens[length];
 		if (startIndex != MAX_VALUE) {
+			if (!table) {
+				table = htable_string_create();
+			}
 			for (size_t i = startIndex; i < masterPartsCount; i++) {
 				MasterPart mp = masterPartsNoHyphens[i];
 				char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - length);
-				htable_string_insert_if_not_exists(table, suffix, mp.partNumber);
+				htable_string_insert_if_not_exists(table, suffix, length, mp.partNumber);
 			}
 		}
 		mpInfo->suffixesByNoHyphensLength[length] = table;
@@ -171,16 +175,16 @@ void processor_initialize(SourceData* data) {
 
 		HTableString* masterPartsBySuffix = masterPartsInfo->suffixesByLength[part.partNumberLength];
 		if (masterPartsBySuffix) {
-			const char* match = htable_string_search(masterPartsBySuffix, part.partNumber);
+			const char* match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
 			if (match) {
-				htable_string_insert_if_not_exists(dictionary, part.partNumber, match);
+				htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
 			}
 		}
 		masterPartsBySuffix = masterPartsInfo->suffixesByNoHyphensLength[part.partNumberLength];
 		if (masterPartsBySuffix) {
-			const char* match = htable_string_search(masterPartsBySuffix, part.partNumber);
+			const char* match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
 			if (match) {
-				htable_string_insert_if_not_exists(dictionary, part.partNumber, match);
+				htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
 			}
 		}
 	}
@@ -199,7 +203,7 @@ const char* processor_find_match(char* partNumber) {
 		return NULL;
 	}
 
-	const char* match = htable_string_search(dictionary, buffer);
+	const char* match = htable_string_search(dictionary, buffer, bufferLen);
 	if (match) {
 		return match;
 	}

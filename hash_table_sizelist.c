@@ -92,9 +92,6 @@ void htable_sizelist_free(HTableSizeList* table) {
         while (entry) {
             EntrySizeList* temp = entry;
             entry = entry->next;
-            if (temp && temp->key) {
-                free((void*)temp->key);
-            }
             sizelist_free(temp->list);
             free(temp);
         }

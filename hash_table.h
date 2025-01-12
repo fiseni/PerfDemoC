@@ -31,7 +31,7 @@ void htable_string_free(HTableString* table);
 // #########################################################
 // Hash table storing a list of strings as value.
 typedef struct StringList {
-    char** strings;
+    const char** strings;
     size_t count;
     size_t capacity;
 } StringList;

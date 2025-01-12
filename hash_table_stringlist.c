@@ -31,7 +31,7 @@ static StringList* stringlist_create() {
 static void stringlist_add(StringList* list, const char* value) {
     if (list->count >= list->capacity) {
         list->capacity *= 2;
-        char** newList = realloc(list->strings, list->capacity * sizeof(char*));
+        const char** newList = realloc(list->strings, list->capacity * sizeof(char*));
         assert(newList);
         list->strings = newList;
     }
@@ -89,9 +89,6 @@ void htable_stringlist_add_string(HTableStringList* table, const char* key, int 
 }
 
 static void stringlist_free(StringList* list) {
-    for (size_t i = 0; i < list->count; i++) {
-        free(list->strings[i]);
-    }
     free(list->strings);
     free(list);
 }
@@ -102,9 +99,6 @@ void htable_stringlist_free(HTableStringList* table) {
         while (entry) {
             EntryStringList* temp = entry;
             entry = entry->next;
-            if (temp && temp->key) {
-                free((void*)temp->key);
-            }
             stringlist_free(temp->list);
             free(temp);
         }

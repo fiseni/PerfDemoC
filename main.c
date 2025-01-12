@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
         SourceData* data = data_read(argc, argv);
         printf("MasterParts Count: \t%zu\n", data->masterPartsCount);
         printf("Parts Count: \t\t%zu\n\n", data->partsCount);
-        printf("Main initialization: \t\t%f seconds.\n", time_get_seconds() - start);
+        printf("Reading source data: \t\t%f seconds.\n", time_get_seconds() - start);
 
         double start2 = time_get_seconds();
         processor_initialize(data);

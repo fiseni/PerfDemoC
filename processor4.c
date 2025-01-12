@@ -23,10 +23,10 @@ typedef struct PartsInfo {
 typedef struct MasterPartsInfo {
     MasterPart* masterParts;
     MasterPart* masterPartsNoHyphens;
-    HTableString* suffixesByLength[MAX_LINE_LEN + 1];
-    HTableString* suffixesByNoHyphensLength[MAX_LINE_LEN + 1];
     size_t masterPartsCount;
     size_t masterPartsNoHyphensCount;
+    HTableString* suffixesByLength[MAX_LINE_LEN + 1];
+    HTableString* suffixesByNoHyphensLength[MAX_LINE_LEN + 1];
 } MasterPartsInfo;;
 
 HTableString* dictionary = NULL;
@@ -188,7 +188,7 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
     for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
         partsInfo->suffixesByLength[length] = NULL;
     }
-    for (size_t length = 3; length < MAX_LINE_LEN; length++) {
+    for (size_t length = 3; length <= MAX_LINE_LEN; length++) {
         HTableSizeList* table = NULL;
         size_t startIndex = startIndexByLength[length];
         if (startIndex != MAX_VALUE) {
@@ -267,7 +267,7 @@ const char* processor_find_match(char* partNumber) {
 
 void processor_clean() {
     free(masterPartsInfo->masterPartsNoHyphens);
-    for (size_t i = 0; i < MAX_LINE_LEN; i++) {
+    for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
         if (masterPartsInfo->suffixesByLength[i]) {
             htable_string_free(masterPartsInfo->suffixesByLength[i]);
         }
@@ -277,7 +277,7 @@ void processor_clean() {
     }
     free(masterPartsInfo);
     free(partsInfo->parts);
-    for (size_t i = 0; i < MAX_LINE_LEN; i++) {
+    for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
         if (partsInfo->suffixesByLength[i]) {
             htable_sizelist_free(partsInfo->suffixesByLength[i]);
         }

@@ -5,20 +5,20 @@
 #include <windows.h>
 
 double time_get_seconds(void) {
-	static LARGE_INTEGER frequency;
-	static int initialized = 0;
+    static LARGE_INTEGER frequency;
+    static int initialized = 0;
 
-	// One-time initialization of frequency
-	if (!initialized) {
-		QueryPerformanceFrequency(&frequency);
-		initialized = 1;
-	}
+    // One-time initialization of frequency
+    if (!initialized) {
+        QueryPerformanceFrequency(&frequency);
+        initialized = 1;
+    }
 
-	LARGE_INTEGER counter;
-	QueryPerformanceCounter(&counter);
+    LARGE_INTEGER counter;
+    QueryPerformanceCounter(&counter);
 
-	// Return seconds as a double
-	return (double)counter.QuadPart / (double)frequency.QuadPart;
+    // Return seconds as a double
+    return (double)counter.QuadPart / (double)frequency.QuadPart;
 }
 
 #else  // POSIX (Linux, macOS, etc.)
@@ -34,9 +34,9 @@ double time_get_seconds(void) {
 //}
 
 double time_get_seconds(void) {
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	return (double)now.tv_sec + (double)now.tv_usec / 1000000.0;
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return (double)now.tv_sec + (double)now.tv_usec / 1000000.0;
 }
 
 #endif

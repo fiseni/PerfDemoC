@@ -5,22 +5,22 @@
 #define MAX_LINE_LEN ((size_t)50)
 
 typedef struct MasterPart {
-	char* partNumber;
-	char* partNumberNoHyphens;
-	int partNumberLength;
-	int partNumberNoHyphensLength;
+    char* partNumber;
+    char* partNumberNoHyphens;
+    int partNumberLength;
+    int partNumberNoHyphensLength;
 } MasterPart;
 
 typedef struct Part {
-	char* partNumber;
-	int partNumberLength;
+    char* partNumber;
+    int partNumberLength;
 } Part;
 
 typedef struct SourceData {
-	MasterPart* masterParts;
-	size_t masterPartsCount;
-	Part* parts;
-	size_t partsCount;
+    MasterPart* masterParts;
+    size_t masterPartsCount;
+    Part* parts;
+    size_t partsCount;
 } SourceData;
 
 SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, char** partNumbers, size_t partNumbersCount);

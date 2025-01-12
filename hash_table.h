@@ -33,7 +33,7 @@ void htable_string_free(HTableString* table);
 typedef struct StringList {
     char** strings;
     size_t count;
-    size_t capacity;    
+    size_t capacity;
 } StringList;
 
 typedef struct EntryStringList {

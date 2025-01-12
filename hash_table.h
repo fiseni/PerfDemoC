@@ -20,9 +20,11 @@ void htable_string_free(HTableString* table);
 
 //#define TABLE_SIZE2 1048576
 //#define TABLE_SIZE2 524288
-#define TABLE_SIZE2 262144
-//#define TABLE_SIZE2 131072
+//#define TABLE_SIZE2 262144
+#define TABLE_SIZE2 131072
 //#define TABLE_SIZE2 65536
+//#define TABLE_SIZE2 32768
+//#define TABLE_SIZE2 16384
 
 typedef struct StringList {
     char** strings;
@@ -37,7 +39,7 @@ typedef struct EntryStringList {
 } EntryStringList;
 
 typedef struct HTableStringList {
-    EntryStringList* buckets[TABLE_SIZE];
+    EntryStringList* buckets[TABLE_SIZE2];
 } HTableStringList;
 
 HTableStringList* htable_stringlist_create();

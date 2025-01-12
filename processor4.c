@@ -17,7 +17,7 @@ const char* processor_get_identifier() {
 typedef struct PartsInfo {
 	Part* parts;
 	size_t partsCount;
-	size_t startIndexByLengthDesc[MAX_LINE_LEN + 1];
+	HTableStringList* suffixesByLength[MAX_LINE_LEN + 1];
 } PartsInfo;
 
 typedef struct MasterPartsInfo {
@@ -35,18 +35,6 @@ PartsInfo* partsInfo = NULL;
 static void backward_fill(size_t* array) {
 	size_t tmp = array[MAX_LINE_LEN];
 	for (int i = (int)MAX_LINE_LEN; i >= 0; i--) {
-		if (array[i] == MAX_VALUE) {
-			array[i] = tmp;
-		}
-		else {
-			tmp = array[i];
-		}
-	}
-}
-
-static void forward_fill(size_t* array) {
-	size_t tmp = array[0];
-	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
 		if (array[i] == MAX_VALUE) {
 			array[i] = tmp;
 		}
@@ -151,15 +139,34 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
 	partsInfo->parts = parts;
 	partsInfo->partsCount = count;
 
-	// Populate the start indices
+	// Create and populate start indices.
+	size_t startIndexByLength[MAX_LINE_LEN + 1] = { 0 };
 	for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
-		partsInfo->startIndexByLengthDesc[i] = MAX_VALUE;
+		startIndexByLength[i] = MAX_VALUE;
 	}
-	for (size_t i = 0; i < masterPartsInfo->masterPartsCount; i++) {
-		size_t length = masterPartsInfo->masterParts[i].partNumberLength;
-		partsInfo->startIndexByLengthDesc[length] = i;
+	for (size_t i = 0; i < count; i++) {
+		size_t length = parts[i].partNumberLength;
+		if (startIndexByLength[length] == MAX_VALUE) {
+			startIndexByLength[length] = i;
+		}
 	}
-	forward_fill(partsInfo->startIndexByLengthDesc);
+	backward_fill(startIndexByLength);
+
+	for (size_t length = 4; length < MAX_LINE_LEN; length++) {
+		HTableStringList* table = NULL;
+		size_t startIndex = startIndexByLength[length];
+		if (startIndex != MAX_VALUE) {
+			if (!table) {
+				table = htable_stringlist_create();
+			}
+			for (size_t i = startIndex; i < count; i++) {
+				Part part = parts[i];
+				char* suffix = part.partNumber + (part.partNumberLength - length);
+				htable_stringlist_add_string(table, suffix, length, part.partNumber);
+			}
+		}
+		partsInfo->suffixesByLength[length] = table;
+	}
 
 	return partsInfo;
 }
@@ -188,6 +195,20 @@ void processor_initialize(SourceData* data) {
 			}
 		}
 	}
+
+	for (int i = (int)masterPartsInfo->masterPartsCount - 1; i >= 0; i--) {
+		MasterPart mp = masterPartsInfo->masterParts[i];
+		HTableStringList* partsBySuffix = partsInfo->suffixesByLength[mp.partNumberLength];
+		if (partsBySuffix) {
+			const StringList* originalParts = htable_stringlist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
+			if (originalParts) {
+				for (int j = originalParts->count - 1; j >= 0 ; j--) {
+					const char* partNumber = originalParts->strings[j];
+					htable_string_insert_if_not_exists(dictionary, partNumber, strlen(partNumber), mp.partNumber);
+				}
+			}
+		}
+	}
 }
 
 const char* processor_find_match(char* partNumber) {
@@ -204,21 +225,7 @@ const char* processor_find_match(char* partNumber) {
 	}
 
 	const char* match = htable_string_search(dictionary, buffer, bufferLen);
-	if (match) {
-		return match;
-	}
-
-	size_t startIndex = partsInfo->startIndexByLengthDesc[bufferLen];
-	if (startIndex != MAX_VALUE) {
-		for (long i = (long)startIndex; i >= 0; i--) {
-			MasterPart mp = masterPartsInfo->masterParts[i];
-			if (is_suffix_vectorized(mp.partNumber, mp.partNumberLength, buffer, bufferLen)) {
-				return mp.partNumber;
-			}
-		}
-	}
-
-	return NULL;
+	return match;
 }
 
 void processor_clean() {

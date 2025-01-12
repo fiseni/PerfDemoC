@@ -12,7 +12,7 @@ impl="1"
 fi
 
 FLAGS="-O3 -march=native -s -Wall -Wextra"
-FILES="main.c utils.c cross_platform_time.c hash_table_string.c hash_table_stringlist.c source_data.c test.c processor$impl.c"
+FILES="main.c utils.c cross_platform_time.c hash_table_string.c hash_table_stringlist.c hash_table_sizelist.c source_data.c test.c processor$impl.c"
 
 if [ "$type" = "echo" ]; then
 echo gcc $FLAGS $FILES -o demo

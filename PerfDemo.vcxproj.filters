@@ -33,9 +33,6 @@
     <ClCompile Include="processor1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hash_table.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="processor4.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -43,6 +40,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hash_table_stringlist.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hash_table_string.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hash_table_sizelist.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -17,7 +17,7 @@ const char* processor_get_identifier() {
 typedef struct PartsInfo {
 	Part* parts;
 	size_t partsCount;
-	HTableStringList* suffixesByLength[MAX_LINE_LEN + 1];
+	HTableSizeList* suffixesByLength[MAX_LINE_LEN + 1];
 } PartsInfo;
 
 typedef struct MasterPartsInfo {
@@ -189,16 +189,16 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
 		partsInfo->suffixesByLength[length] = NULL;
 	}
 	for (size_t length = 3; length < MAX_LINE_LEN; length++) {
-		HTableStringList* table = NULL;
+		HTableSizeList* table = NULL;
 		size_t startIndex = startIndexByLength[length];
 		if (startIndex != MAX_VALUE) {
 			if (!table) {
-				table = htable_stringlist_create();
+				table = htable_sizelist_create();
 			}
 			for (size_t i = startIndex; i < count; i++) {
 				Part part = parts[i];
 				char* suffix = part.partNumber + (part.partNumberLength - length);
-				htable_stringlist_add_string(table, suffix, length, part.partNumber);
+				htable_sizelist_add(table, suffix, length, i);
 			}
 		}
 		partsInfo->suffixesByLength[length] = table;
@@ -234,13 +234,14 @@ void processor_initialize(SourceData* data) {
 
 	for (int i = (int)masterPartsInfo->masterPartsCount - 1; i >= 0; i--) {
 		MasterPart mp = masterPartsInfo->masterParts[i];
-		HTableStringList* partsBySuffix = partsInfo->suffixesByLength[mp.partNumberLength];
+		HTableSizeList* partsBySuffix = partsInfo->suffixesByLength[mp.partNumberLength];
 		if (partsBySuffix) {
-			const StringList* originalParts = htable_stringlist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
+			const SizeList* originalParts = htable_sizelist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
 			if (originalParts) {
 				for (int j = originalParts->count - 1; j >= 0 ; j--) {
-					const char* partNumber = originalParts->strings[j];
-					htable_string_insert_if_not_exists(dictionary, partNumber, strlen(partNumber), mp.partNumber);
+					size_t originalPartIndex = originalParts->values[j];
+					Part part = partsInfo->parts[originalPartIndex];
+					htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, mp.partNumber);
 				}
 			}
 		}

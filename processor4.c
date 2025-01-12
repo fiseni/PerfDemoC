@@ -26,6 +26,7 @@ typedef struct MasterPartsInfo {
 	HTableString* suffixesByLength[MAX_LINE_LEN + 1];
 	HTableString* suffixesByNoHyphensLength[MAX_LINE_LEN + 1];
 	size_t masterPartsCount;
+	size_t masterPartsNoHyphensCount;
 } MasterPartsInfo;;
 
 HTableString* dictionary = NULL;
@@ -44,18 +45,43 @@ static void backward_fill(size_t* array) {
 	}
 }
 
-static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t masterPartsCount) {
-	qsort(masterParts, masterPartsCount, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
+static bool containsDash(const char* str, int strLength) {
+	for (int i = 0; i < strLength; i++) {
+		if (str[i] == '-') {
+			return true;
+		}
+	}
+	return false;
+}
+
+static MasterPart* build_masterPartsNyHyphen(MasterPart* masterParts, size_t masterPartsCount, size_t* outCount) {
 	MasterPart* masterPartsNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsNoHyphens));
 	assert(masterPartsNoHyphens);
-	memcpy(masterPartsNoHyphens, masterParts, masterPartsCount * sizeof(*masterPartsNoHyphens));
-	qsort(masterPartsNoHyphens, masterPartsCount, sizeof(*masterPartsNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
+	size_t count = 0;
+	for (size_t i = 0; i < masterPartsCount; i++) {
+		if (containsDash(masterParts[i].partNumber, masterParts[i].partNumberLength)) {
+			masterPartsNoHyphens[count++] = masterParts[i];
+		}
+		//if (strchr(masterParts[i].partNumber, '-')) {
+		//	masterPartsNoHyphens[count++] = masterParts[i];
+		//}
+	}
+	qsort(masterPartsNoHyphens, count, sizeof(*masterPartsNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
+	*outCount = count;
+	return masterPartsNoHyphens;
+}
+
+static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t masterPartsCount) {
+	qsort(masterParts, masterPartsCount, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
+	size_t masterPartsNoHyphensCount = 0;
+	MasterPart* masterPartsNoHyphens = build_masterPartsNyHyphen(masterParts, masterPartsCount, &masterPartsNoHyphensCount);
 
 	MasterPartsInfo* mpInfo = malloc(sizeof(*mpInfo));
 	assert(mpInfo);
 	mpInfo->masterParts = masterParts;
 	mpInfo->masterPartsNoHyphens = masterPartsNoHyphens;
 	mpInfo->masterPartsCount = masterPartsCount;
+	mpInfo->masterPartsNoHyphensCount = masterPartsNoHyphensCount;
 
 	// Create and populate start indices.
 	size_t startIndexByLength[MAX_LINE_LEN + 1] = { 0 };
@@ -69,7 +95,9 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
 		if (startIndexByLength[length] == MAX_VALUE) {
 			startIndexByLength[length] = i;
 		}
-		length = masterPartsNoHyphens[i].partNumberNoHyphensLength;
+	}
+	for (size_t i = 0; i < masterPartsNoHyphensCount; i++) {
+		size_t length = masterPartsNoHyphens[i].partNumberNoHyphensLength;
 		if (startIndexByLengthNoHyphens[length] == MAX_VALUE) {
 			startIndexByLengthNoHyphens[length] = i;
 		}
@@ -104,7 +132,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
 			if (!table) {
 				table = htable_string_create();
 			}
-			for (size_t i = startIndex; i < masterPartsCount; i++) {
+			for (size_t i = startIndex; i < masterPartsNoHyphensCount; i++) {
 				MasterPart mp = masterPartsNoHyphens[i];
 				char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - length);
 				htable_string_insert_if_not_exists(table, suffix, length, mp.partNumber);

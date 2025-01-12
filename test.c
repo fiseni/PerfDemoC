@@ -26,6 +26,7 @@ TestPart testParts[] =
 	{NULL, "KLMN"},
 	{NULL, "ijkl"},
 	{NULL, "IJKL"},
+	{"699", "W50-699"},
 	{"CDEFGHIJKLMNO", "defghijklmno"},
 	{"CDEFGHIJKLMNO", "DEFGHIJKLMNO"},
 	{"ABCDEFGHI---------------JKLMNO", "DEFGHI---------------JKLMNO"},
@@ -43,6 +44,7 @@ TestPart testParts[] =
 
 char* testMasterPartNumbers[] =
 {
+	"699",
 	"Aqwertyuio",
 	"QWERTYUIO",
 	"zxc",

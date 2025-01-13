@@ -5,6 +5,15 @@
 #define strdup _strdup
 #endif
 
+// Macro to check allocation
+#define CHECK_ALLOC(ptr)                                   \
+    do {                                                   \
+        if (!(ptr)) {                                      \
+            fprintf(stderr, "Memory allocation failed\n"); \
+            exit(EXIT_FAILURE);                            \
+        }                                                  \
+    } while (0)
+
 #include <stdbool.h>
 
 bool is_suffix(const char* value, size_t lenValue, const char* source, size_t lenSource);

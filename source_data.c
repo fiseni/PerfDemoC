@@ -7,7 +7,7 @@
 
 static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outSize) {
     MasterPart* outputArray = malloc(inputSize * sizeof(*outputArray));
-    assert(outputArray);
+    CHECK_ALLOC(outputArray);
 
     size_t count = 0;
     for (size_t i = 0; i < inputSize; i++) {
@@ -27,7 +27,7 @@ static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_
             outputArray[count].partNumber = malloc(buffer1_len + 1);
             outputArray[count].partNumberNoHyphens = malloc(buffer2_len + 1);
 
-            assert(outputArray[count].partNumber && outputArray[count].partNumberNoHyphens);
+            CHECK_ALLOC(outputArray[count].partNumber && outputArray[count].partNumberNoHyphens);
 
             strcpy(outputArray[count].partNumber, buffer1);
             strcpy(outputArray[count].partNumberNoHyphens, buffer2);
@@ -59,7 +59,7 @@ static char** read_file_lines(const char* filename, size_t* outLineCount) {
 
     // Allocate array of pointers for lines
     char** lines = malloc(lineCount * sizeof(*lines));
-    assert(lines);
+    CHECK_ALLOC(lines);
 
     // Second pass: read lines and store them
     for (size_t i = 0; i < lineCount; i++) {
@@ -76,7 +76,7 @@ static char** read_file_lines(const char* filename, size_t* outLineCount) {
         buffer[strcspn(buffer, "\r\n")] = '\0';
 
         lines[i] = strdup(buffer);
-        assert(lines[i]);
+        CHECK_ALLOC(lines[i]);
     }
 
     fclose(file);
@@ -89,10 +89,10 @@ SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, 
     MasterPart* masterParts = build_masterParts(masterPartNumbers, masterPartNumbersCount, 3, &masterPartsCount);
 
     SourceData* data = (SourceData*)malloc(sizeof(*data));
-    assert(data);
+    CHECK_ALLOC(data);
 
     Part* parts = malloc(partNumbersCount * sizeof(*parts));
-    assert(parts);
+    CHECK_ALLOC(parts);
 
     for (size_t i = 0; i < partNumbersCount; i++) {
         parts[i].partNumber = partNumbers[i];

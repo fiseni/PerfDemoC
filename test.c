@@ -70,7 +70,7 @@ void run_tests() {
     size_t testMasterPartNumbersCount = sizeof(testMasterPartNumbers) / sizeof(testMasterPartNumbers[0]);
     size_t testPartsCount = sizeof(testParts) / sizeof(testParts[0]);
     char** testPartNumbers = malloc(testPartsCount * sizeof(char*));
-    assert(testPartNumbers);
+    CHECK_ALLOC(testPartNumbers);
     for (size_t i = 0; i < testPartsCount; i++) {
         testPartNumbers[i] = testParts[i].partNumber;
     };

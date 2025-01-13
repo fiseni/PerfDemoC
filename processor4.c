@@ -56,7 +56,7 @@ static bool containsDash(const char* str, int strLength) {
 
 static MasterPart* build_masterPartsNyHyphen(MasterPart* masterParts, size_t masterPartsCount, size_t* outCount) {
     MasterPart* masterPartsNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsNoHyphens));
-    assert(masterPartsNoHyphens);
+    CHECK_ALLOC(masterPartsNoHyphens);
     size_t count = 0;
     for (size_t i = 0; i < masterPartsCount; i++) {
         if (containsDash(masterParts[i].partNumber, masterParts[i].partNumberLength)) {
@@ -77,7 +77,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
     MasterPart* masterPartsNoHyphens = build_masterPartsNyHyphen(masterParts, masterPartsCount, &masterPartsNoHyphensCount);
 
     MasterPartsInfo* mpInfo = malloc(sizeof(*mpInfo));
-    assert(mpInfo);
+    CHECK_ALLOC(mpInfo);
     mpInfo->masterParts = masterParts;
     mpInfo->masterPartsNoHyphens = masterPartsNoHyphens;
     mpInfo->masterPartsCount = masterPartsCount;
@@ -146,7 +146,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
 
 static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t minLen) {
     Part* parts = malloc(inputSize * sizeof(*parts));
-    assert(parts);
+    CHECK_ALLOC(parts);
 
     size_t partsCount = 0;
     for (size_t i = 0; i < inputSize; i++) {
@@ -159,7 +159,7 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
             Part* part = &parts[partsCount];
             part->partNumberLength = (int)bufferLength;
             part->partNumber = malloc(bufferLength + 1);
-            assert(part->partNumber);
+            CHECK_ALLOC(part->partNumber);
             strcpy(part->partNumber, buffer);
             partsCount++;
         }
@@ -167,7 +167,7 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
     qsort(parts, partsCount, sizeof(*parts), compare_part_by_partNumber_length_asc);
 
     PartsInfo* partsInfo = malloc(sizeof(*partsInfo));
-    assert(partsInfo);
+    CHECK_ALLOC(partsInfo);
     partsInfo->parts = parts;
     partsInfo->partsCount = partsCount;
 

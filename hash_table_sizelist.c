@@ -26,7 +26,7 @@ static bool is_equal(const char* str1, const char* str2, int str2Length) {
 
 static SizeList* sizelist_create() {
     SizeList* list = malloc(sizeof(*list));
-    assert(list);
+    CHECK_ALLOC(list);
     list->values = malloc(8 * sizeof(size_t));
     list->count = 0;
     list->capacity = 8;
@@ -37,7 +37,7 @@ static void sizelist_add(SizeList* list, size_t value) {
     if (list->count >= list->capacity) {
         list->capacity *= 2;
         size_t* newList = realloc(list->values, list->capacity * sizeof(size_t));
-        assert(newList);
+        CHECK_ALLOC(newList);
         list->values = newList;
     }
     list->values[list->count++] = value;
@@ -50,10 +50,10 @@ HTableSizeList* htable_sizelist_create(size_t size) {
         tableSize = 32;
     }
     HTableSizeList* table = malloc(sizeof(*table));
-    assert(table);
+    CHECK_ALLOC(table);
     table->size = tableSize;
     table->buckets = malloc(sizeof(EntrySizeList*) * tableSize);
-    assert(table->buckets);
+    CHECK_ALLOC(table->buckets);
     for (size_t i = 0; i < tableSize; i++) {
         table->buckets[i] = NULL;
     }
@@ -94,7 +94,7 @@ void htable_sizelist_add(HTableSizeList* table, const char* key, int keyLength, 
 
     // Key not found, create new entry
     EntrySizeList* newEntry = malloc(sizeof(*newEntry));
-    assert(newEntry);
+    CHECK_ALLOC(newEntry);
     newEntry->key = key;
     newEntry->list = sizelist_create();
     sizelist_add(newEntry->list, value);

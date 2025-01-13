@@ -80,42 +80,38 @@ void processor_initialize(SourceData* data) {
 
 const char* processor_find_match(char* partNumber) {
 
-    if (partNumber == NULL) {
-        return NULL;
-    }
-
     char buffer[MAX_LINE_LEN];
-    to_upper_trim(partNumber, buffer, sizeof(buffer));
-    size_t bufferLen = strlen(buffer);
-    if (bufferLen < 3) {
+    size_t bufferLength;
+    to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
+    if (bufferLength < 3) {
         return NULL;
     }
 
-    size_t startIndex = startIndexByLengthAsc[bufferLen];
+    size_t startIndex = startIndexByLengthAsc[bufferLength];
     if (startIndex != MAX_VALUE) {
         for (size_t i = startIndex; i < masterPartsCount; i++) {
             MasterPart mp = masterPartsAsc[i];
-            if (is_suffix_vectorized(buffer, bufferLen, mp.partNumber, mp.partNumberLength)) {
+            if (is_suffix_vectorized(buffer, bufferLength, mp.partNumber, mp.partNumberLength)) {
                 return mp.partNumber;
             }
         }
     }
 
-    startIndex = startIndexByLengthAscNoHyphens[bufferLen];
+    startIndex = startIndexByLengthAscNoHyphens[bufferLength];
     if (startIndex != MAX_VALUE) {
         for (size_t i = startIndex; i < masterPartsCount; i++) {
             MasterPart mp = masterPartsAscByNoHyphens[i];
-            if (is_suffix_vectorized(buffer, bufferLen, mp.partNumberNoHyphens, mp.partNumberNoHyphensLength)) {
+            if (is_suffix_vectorized(buffer, bufferLength, mp.partNumberNoHyphens, mp.partNumberNoHyphensLength)) {
                 return mp.partNumber;
             }
         }
     }
 
-    startIndex = startIndexByLengthDesc[bufferLen];
+    startIndex = startIndexByLengthDesc[bufferLength];
     if (startIndex != MAX_VALUE) {
         for (long i = (long)startIndex; i >= 0; i--) {
             MasterPart mp = masterPartsAsc[i];
-            if (is_suffix_vectorized(mp.partNumber, mp.partNumberLength, buffer, bufferLen)) {
+            if (is_suffix_vectorized(mp.partNumber, mp.partNumberLength, buffer, bufferLength)) {
                 return mp.partNumber;
             }
         }

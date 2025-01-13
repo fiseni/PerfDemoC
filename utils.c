@@ -6,40 +6,35 @@
 #include <immintrin.h>
 #include "utils.h"
 
-#ifdef _MSC_VER
-#define strdup _strdup
-#endif
-
-void to_upper_trim(char* src, char* buffer, size_t bufferSize) {
+void to_upper_trim(const char* src, char* buffer, size_t bufferSize, size_t* outBufferLength) {
     if (src == NULL || buffer == NULL || bufferSize == 0) {
+        *outBufferLength = 0;
         return;
     }
-
     size_t len = strlen(src);
     size_t j = 0;
-
     for (size_t i = 0; i < len && j < bufferSize - 1; i++) {
         if (!isspace((unsigned char)src[i])) {
             buffer[j++] = (char)toupper((unsigned char)src[i]);
         }
     }
     buffer[j] = '\0';
+    *outBufferLength = j;
 }
 
-void remove_char(char* src, char* buffer, size_t bufferSize, char find) {
+void remove_char(const char* src, size_t srcLength, char* buffer, size_t bufferSize, char find, size_t* outBufferLength) {
     if (src == NULL || buffer == NULL || bufferSize == 0) {
+        *outBufferLength = 0;
         return;
     }
-
-    size_t len = strlen(src);
     size_t j = 0;
-
-    for (size_t i = 0; i < len && j < bufferSize - 1; i++) {
+    for (size_t i = 0; i < srcLength && j < bufferSize - 1; i++) {
         if (src[i] != find) {
             buffer[j++] = (char)toupper((unsigned char)src[i]);
         }
     }
     buffer[j] = '\0';
+    *outBufferLength = j;
 }
 
 static int strcmp_same_length_vectorized(const char* s1, const char* s2, size_t length) {
@@ -90,24 +85,24 @@ static int strcmp_same_length_vectorized(const char* s1, const char* s2, size_t 
     return 0; // Strings are equal
 }
 
-bool is_suffix(const char* value, size_t lenValue, const char* source, size_t lenSource) {
-    if (lenValue > lenSource) {
+bool is_suffix(const char* value, size_t valueLength, const char* source, size_t sourceLength) {
+    if (valueLength > sourceLength) {
         return false;
     }
-    const char* endOfSource = source + (lenSource - lenValue);
+    const char* endOfSource = source + (sourceLength - valueLength);
     //return (strcmp(endOfSource, value) == 0);
-    return (memcmp(endOfSource, value, lenValue) == 0);
+    return (memcmp(endOfSource, value, valueLength) == 0);
 }
 
-bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source, size_t lenSource) {
-    if (lenValue > lenSource) {
+bool is_suffix_vectorized(const char* value, size_t valueLength, const char* source, size_t sourceLength) {
+    if (valueLength > sourceLength) {
         return false;
     }
-    const char* endOfSource = source + (lenSource - lenValue);
+    const char* endOfSource = source + (sourceLength - valueLength);
 
     // For our use-case most of the time the strings are not equal.
     // It turns out checking the first char before vectorization improves the performance.
-    return (endOfSource[0] == value[0] && strcmp_same_length_vectorized(endOfSource, value, lenValue) == 0);
+    return (endOfSource[0] == value[0] && strcmp_same_length_vectorized(endOfSource, value, valueLength) == 0);
 }
 
 static int is_power_of_two(size_t n) {

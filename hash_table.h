@@ -7,6 +7,7 @@ typedef struct EntryString {
     const char* key;
     const char* value;
     struct EntryString* next;
+    int allocatedFromBlock;
 } EntryString;
 
 typedef struct HTableString {
@@ -24,8 +25,6 @@ void htable_string_free(HTableString* table);
 
 // #########################################################
 // Hash table storing a list of size_t as value.
-#define TABLE_SIZE 131072
-
 typedef struct SizeList {
     size_t* values;
     size_t count;
@@ -39,10 +38,11 @@ typedef struct EntrySizeList {
 } EntrySizeList;
 
 typedef struct HTableSizeList {
-    EntrySizeList* buckets[TABLE_SIZE];
+    EntrySizeList** buckets;
+    size_t size;
 } HTableSizeList;
 
-HTableSizeList* htable_sizelist_create();
+HTableSizeList* htable_sizelist_create(size_t size);
 const SizeList* htable_sizelist_search(HTableSizeList* table, const char* key, int keyLength);
 void htable_sizelist_add(HTableSizeList* table, const char* key, int keyLength, size_t value);
 void htable_sizelist_free(HTableSizeList* table);

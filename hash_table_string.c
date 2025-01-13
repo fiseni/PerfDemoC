@@ -24,8 +24,6 @@ static bool is_equal(const char* str1, const char* str2, int str2Length) {
     return true;
 }
 
-
-
 HTableString* htable_string_create(size_t size) {
     size_t tableSize = next_power_of_two(size);
     if (tableSize == 0) {
@@ -37,8 +35,9 @@ HTableString* htable_string_create(size_t size) {
     table->size = tableSize;
     table->buckets = malloc(sizeof(EntryString*) * tableSize);
     assert(table->buckets);
-    for (size_t i = 0; i < tableSize; i++)
+    for (size_t i = 0; i < tableSize; i++) {
         table->buckets[i] = NULL;
+    }
     size_t blockSize = tableSize * 2;
     table->block = malloc(sizeof(EntryString) * blockSize);
     assert(table->block);
@@ -76,10 +75,12 @@ void htable_string_insert_if_not_exists(HTableString* table, const char* key, in
     EntryString* new_entry;
     if (table->blockIndex < table->blockCount) {
         new_entry = &table->block[table->blockIndex++];
+        new_entry->allocatedFromBlock = 1;
     }
     else {
         new_entry = malloc(sizeof(EntryString));
         assert(new_entry);
+        new_entry->allocatedFromBlock = 0;
     }
 
     new_entry->key = key;
@@ -89,14 +90,20 @@ void htable_string_insert_if_not_exists(HTableString* table, const char* key, in
 }
 
 void htable_string_free(HTableString* table) {
-    free(table->block);
     for (size_t i = 0; i < table->size; i++) {
         EntryString* entry = table->buckets[i];
         while (entry) {
-            EntryString* temp = entry;
-            entry = entry->next;
-            free(temp);
+            if (entry->allocatedFromBlock == 0) {
+                EntryString* temp = entry;
+                entry = entry->next;
+                free(temp);
+            }
+            else {
+                entry = entry->next;
+            }
         }
     }
+    free(table->block);
+    free(table->buckets);
     free(table);
 }

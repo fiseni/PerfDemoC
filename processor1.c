@@ -33,34 +33,30 @@ void processor_initialize(SourceData* data) {
 
 const char* processor_find_match(char* partNumber) {
 
-    if (partNumber == NULL) {
-        return NULL;
-    }
-
     char buffer[MAX_LINE_LEN];
-    to_upper_trim(partNumber, buffer, sizeof(buffer));
-    size_t bufferLen = strlen(buffer);
-    if (bufferLen < 3) {
+    size_t bufferLength;
+    to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
+    if (bufferLength < 3) {
         return NULL;
     }
 
     for (size_t i = 0; i < masterPartsCount; i++) {
         MasterPart mp = masterPartsAsc[i];
-        if (is_suffix_vectorized(buffer, bufferLen, mp.partNumber, mp.partNumberLength)) {
+        if (is_suffix(buffer, bufferLength, mp.partNumber, mp.partNumberLength)) {
             return mp.partNumber;
         }
     }
 
     for (size_t i = 0; i < masterPartsCount; i++) {
         MasterPart mp = masterPartsAscByNoHyphens[i];
-        if (is_suffix_vectorized(buffer, bufferLen, mp.partNumberNoHyphens, mp.partNumberNoHyphensLength)) {
+        if (is_suffix(buffer, bufferLength, mp.partNumberNoHyphens, mp.partNumberNoHyphensLength)) {
             return mp.partNumber;
         }
     }
 
     for (size_t i = 0; i < masterPartsCount; i++) {
         MasterPart mp = masterPartsDesc[i];
-        if (is_suffix_vectorized(mp.partNumber, mp.partNumberLength, buffer, bufferLen)) {
+        if (is_suffix(mp.partNumber, mp.partNumberLength, buffer, bufferLength)) {
             return mp.partNumber;
         }
     }

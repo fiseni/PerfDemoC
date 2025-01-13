@@ -5,10 +5,6 @@
 #include "utils.h"
 #include "source_data.h"
 
-#ifdef _MSC_VER
-#define strdup _strdup
-#endif
-
 static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outSize) {
     MasterPart* outputArray = malloc(inputSize * sizeof(*outputArray));
     assert(outputArray);
@@ -18,13 +14,13 @@ static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_
         char* src = inputArray[i];
 
         char buffer1[MAX_LINE_LEN];
-        to_upper_trim(src, buffer1, sizeof(buffer1));
-        size_t buffer1_len = strlen(buffer1);
+        size_t buffer1_len;
+        to_upper_trim(src, buffer1, sizeof(buffer1), &buffer1_len);
 
         if (buffer1_len >= minLen) {
             char buffer2[MAX_LINE_LEN];
-            remove_char(buffer1, buffer2, sizeof(buffer2), '-');
-            size_t buffer2_len = strlen(buffer2);
+            size_t buffer2_len;
+            remove_char(buffer1, buffer1_len, buffer2, sizeof(buffer2), '-', &buffer2_len);
 
             outputArray[count].partNumberLength = (int)buffer1_len;
             outputArray[count].partNumberNoHyphensLength = (int)buffer2_len;

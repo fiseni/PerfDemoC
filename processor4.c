@@ -148,35 +148,35 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
     Part* parts = malloc(inputSize * sizeof(*parts));
     assert(parts);
 
-    size_t count = 0;
+    size_t partsCount = 0;
     for (size_t i = 0; i < inputSize; i++) {
         char* src = inputArray[i].partNumber;
         char buffer[MAX_LINE_LEN];
-        to_upper_trim(src, buffer, sizeof(buffer));
-        size_t buffer_len = strlen(buffer);
+        size_t bufferLength;
+        to_upper_trim(src, buffer, sizeof(buffer), &bufferLength);
 
-        if (buffer_len >= minLen) {
-            Part* part = &parts[count];
-            part->partNumberLength = (int)buffer_len;
-            part->partNumber = malloc(buffer_len + 1);
+        if (bufferLength >= minLen) {
+            Part* part = &parts[partsCount];
+            part->partNumberLength = (int)bufferLength;
+            part->partNumber = malloc(bufferLength + 1);
             assert(part->partNumber);
             strcpy(part->partNumber, buffer);
-            count++;
+            partsCount++;
         }
     }
-    qsort(parts, count, sizeof(*parts), compare_part_by_partNumber_length_asc);
+    qsort(parts, partsCount, sizeof(*parts), compare_part_by_partNumber_length_asc);
 
     PartsInfo* partsInfo = malloc(sizeof(*partsInfo));
     assert(partsInfo);
     partsInfo->parts = parts;
-    partsInfo->partsCount = count;
+    partsInfo->partsCount = partsCount;
 
     // Create and populate start indices.
     size_t startIndexByLength[MAX_LINE_LEN + 1] = { 0 };
     for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
         startIndexByLength[i] = MAX_VALUE;
     }
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = 0; i < partsCount; i++) {
         size_t length = parts[i].partNumberLength;
         if (startIndexByLength[length] == MAX_VALUE) {
             startIndexByLength[length] = i;
@@ -193,9 +193,9 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
         size_t startIndex = startIndexByLength[length];
         if (startIndex != MAX_VALUE) {
             if (!table) {
-                table = htable_sizelist_create();
+                table = htable_sizelist_create(partsCount);
             }
-            for (size_t i = startIndex; i < count; i++) {
+            for (size_t i = startIndex; i < partsCount; i++) {
                 Part part = parts[i];
                 char* suffix = part.partNumber + (part.partNumberLength - length);
                 htable_sizelist_add(table, suffix, (int)length, i);
@@ -250,18 +250,14 @@ void processor_initialize(SourceData* data) {
 
 const char* processor_find_match(char* partNumber) {
 
-    if (partNumber == NULL) {
-        return NULL;
-    }
-
     char buffer[MAX_LINE_LEN];
-    to_upper_trim(partNumber, buffer, sizeof(buffer));
-    size_t bufferLen = strlen(buffer);
-    if (bufferLen < 3) {
+    size_t bufferLength;
+    to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
+    if (bufferLength < 3) {
         return NULL;
     }
 
-    const char* match = htable_string_search(dictionary, buffer, (int)bufferLen);
+    const char* match = htable_string_search(dictionary, buffer, (int)bufferLength);
     return match;
 }
 

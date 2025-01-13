@@ -1,16 +1,6 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
-#define TABLE_SIZE 1048576
-
-//#define TABLE_SIZE2 1048576
-//#define TABLE_SIZE2 524288
-//#define TABLE_SIZE2 262144
-#define TABLE_SIZE2 131072
-//#define TABLE_SIZE2 65536
-//#define TABLE_SIZE2 32768
-//#define TABLE_SIZE2 16384
-
 // #########################################################
 // Hash table storing a string as value.
 typedef struct EntryString {
@@ -20,39 +10,22 @@ typedef struct EntryString {
 } EntryString;
 
 typedef struct HTableString {
-    EntryString* buckets[TABLE_SIZE];
+    EntryString** buckets;
+    size_t size;
+    EntryString* block;
+    size_t blockCount;
+    size_t blockIndex;
 } HTableString;
 
-HTableString* htable_string_create();
+HTableString* htable_string_create(size_t size);
 const char* htable_string_search(HTableString* table, const char* key, int keyLength);
 void htable_string_insert_if_not_exists(HTableString* table, const char* key, int keyLength, const char* value);
 void htable_string_free(HTableString* table);
 
 // #########################################################
-// Hash table storing a list of strings as value.
-typedef struct StringList {
-    const char** strings;
-    size_t count;
-    size_t capacity;
-} StringList;
-
-typedef struct EntryStringList {
-    const char* key;
-    StringList* list;
-    struct EntryStringList* next;
-} EntryStringList;
-
-typedef struct HTableStringList {
-    EntryStringList* buckets[TABLE_SIZE2];
-} HTableStringList;
-
-HTableStringList* htable_stringlist_create();
-const StringList* htable_stringlist_search(HTableStringList* table, const char* key, int keyLength);
-void htable_stringlist_add_string(HTableStringList* table, const char* key, int keyLength, const char* value);
-void htable_stringlist_free(HTableStringList* table);
-
-// #########################################################
 // Hash table storing a list of size_t as value.
+#define TABLE_SIZE 131072
+
 typedef struct SizeList {
     size_t* values;
     size_t count;
@@ -66,7 +39,7 @@ typedef struct EntrySizeList {
 } EntrySizeList;
 
 typedef struct HTableSizeList {
-    EntrySizeList* buckets[TABLE_SIZE2];
+    EntrySizeList* buckets[TABLE_SIZE];
 } HTableSizeList;
 
 HTableSizeList* htable_sizelist_create();

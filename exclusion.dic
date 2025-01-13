@@ -16,3 +16,5 @@ htable
 cmpeq
 gettime
 sizelist
+nohyphens
+nohyph

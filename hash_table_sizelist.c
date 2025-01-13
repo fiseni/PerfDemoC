@@ -9,7 +9,7 @@ static unsigned int hash(const char* key, int keyLength) {
     for (int i = 0; i < keyLength; i++) {
         hash = (hash * 31) + key[i];
     }
-    return hash & (TABLE_SIZE2 - 1);
+    return hash & (TABLE_SIZE - 1);
 }
 
 static SizeList* sizelist_create() {
@@ -34,7 +34,7 @@ static void sizelist_add(SizeList* list, size_t value) {
 HTableSizeList* htable_sizelist_create() {
     HTableSizeList* table = malloc(sizeof(*table));
     assert(table);
-    for (size_t i = 0; i < TABLE_SIZE2; i++) {
+    for (size_t i = 0; i < TABLE_SIZE; i++) {
         table->buckets[i] = NULL;
     }
     return table;
@@ -87,7 +87,7 @@ static void sizelist_free(SizeList* list) {
 }
 
 void htable_sizelist_free(HTableSizeList* table) {
-    for (size_t i = 0; i < TABLE_SIZE2; i++) {
+    for (size_t i = 0; i < TABLE_SIZE; i++) {
         EntrySizeList* entry = table->buckets[i];
         while (entry) {
             EntrySizeList* temp = entry;

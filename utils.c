@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <ctype.h>
 #include <immintrin.h>
 #include "utils.h"
@@ -107,4 +108,35 @@ bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source
     // For our use-case most of the time the strings are not equal.
     // It turns out checking the first char before vectorization improves the performance.
     return (endOfSource[0] == value[0] && strcmp_same_length_vectorized(endOfSource, value, lenValue) == 0);
+}
+
+static int is_power_of_two(size_t n) {
+    if (n == 0)
+        return 0;
+    return (n & (n - 1)) == 0;
+}
+
+size_t next_power_of_two(size_t n) {
+    if (n == 0)
+        return 1;
+    if (is_power_of_two(n))
+        return n;
+
+    // Subtract 1 to ensure correct bit setting for the next power of 2
+    n--;
+    int bits = sizeof(size_t) * CHAR_BIT;
+
+    // Set all bits to the right of the MSB
+    for (int shift = 1; shift < bits; shift <<= 1) {
+        n |= n >> shift;
+    }
+
+    // Add 1 to get the next power of 2
+    n++;
+
+    // For clarity in case of overflow.
+    // If n becomes 0 after shifting, it means the next power of 2 exceeds the limit
+    if (n == 0)
+        return 0;
+    return n;
 }

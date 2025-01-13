@@ -115,7 +115,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
         size_t startIndex = startIndexByLength[length];
         if (startIndex != MAX_VALUE) {
             if (!table) {
-                table = htable_string_create();
+                table = htable_string_create(masterPartsCount);
             }
             for (size_t i = startIndex; i < masterPartsCount; i++) {
                 MasterPart mp = masterParts[i];
@@ -130,7 +130,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
         size_t startIndex = startIndexByLengthNoHyphens[length];
         if (startIndex != MAX_VALUE) {
             if (!table) {
-                table = htable_string_create();
+                table = htable_string_create(masterPartsNoHyphensCount);
             }
             for (size_t i = startIndex; i < masterPartsNoHyphensCount; i++) {
                 MasterPart mp = masterPartsNoHyphens[i];
@@ -211,7 +211,7 @@ void processor_initialize(SourceData* data) {
     masterPartsInfo = build_masterPartsInfo(data->masterParts, data->masterPartsCount);
     partsInfo = build_partsInfo(data->parts, data->partsCount, 3);
 
-    dictionary = htable_string_create();
+    dictionary = htable_string_create(partsInfo->partsCount);
 
     for (size_t i = 0; i < partsInfo->partsCount; i++) {
         Part part = partsInfo->parts[i];

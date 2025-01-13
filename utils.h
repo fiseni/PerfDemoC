@@ -8,4 +8,5 @@ bool is_suffix_vectorized(const char* value, size_t lenValue, const char* source
 void to_upper_trim(char* src, char* buffer, size_t bufferSize);
 void remove_char(char* src, char* buffer, size_t bufferSize, char find);
 
+size_t next_power_of_two(size_t n);
 #endif

@@ -13,12 +13,12 @@ static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_
     for (size_t i = 0; i < inputSize; i++) {
         const char* src = inputArray[i];
 
-        char buffer1[MAX_LINE_LEN];
+        char buffer1[MAX_STRING_LENGTH];
         size_t buffer1_len;
         to_upper_trim(src, buffer1, sizeof(buffer1), &buffer1_len);
 
         if (buffer1_len >= minLength) {
-            char buffer2[MAX_LINE_LEN];
+            char buffer2[MAX_STRING_LENGTH];
             size_t buffer2_len;
             remove_char(buffer1, buffer1_len, buffer2, sizeof(buffer2), '-', &buffer2_len);
 
@@ -49,7 +49,7 @@ static char** read_file_lines(const char* filename, size_t* outLineCount) {
 
     // First pass: count lines
     size_t lineCount = 0;
-    char buffer[MAX_LINE_LEN];
+    char buffer[MAX_STRING_LENGTH];
     while (fgets(buffer, sizeof(buffer), file)) {
         lineCount++;
     }
@@ -86,7 +86,7 @@ static char** read_file_lines(const char* filename, size_t* outLineCount) {
 
 const SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, char** partNumbers, size_t partNumbersCount) {
     size_t masterPartsCount = 0;
-    MasterPart* masterParts = build_masterParts(masterPartNumbers, masterPartNumbersCount, 3, &masterPartsCount);
+    MasterPart* masterParts = build_masterParts(masterPartNumbers, masterPartNumbersCount, MIN_STRING_LENGTH, &masterPartsCount);
 
     SourceData* data = (SourceData*)malloc(sizeof(*data));
     CHECK_ALLOC(data);

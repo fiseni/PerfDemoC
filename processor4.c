@@ -17,7 +17,7 @@ const char* processor_get_identifier() {
 typedef struct PartsInfo {
     Part* parts;
     size_t partsCount;
-    HTableSizeList* suffixesByLength[MAX_LINE_LEN + 1];
+    HTableSizeList* suffixesByLength[MAX_STRING_LENGTH];
 } PartsInfo;
 
 typedef struct MasterPartsInfo {
@@ -25,8 +25,8 @@ typedef struct MasterPartsInfo {
     MasterPart* masterPartsNoHyphens;
     size_t masterPartsCount;
     size_t masterPartsNoHyphensCount;
-    HTableString* suffixesByLength[MAX_LINE_LEN + 1];
-    HTableString* suffixesByNoHyphensLength[MAX_LINE_LEN + 1];
+    HTableString* suffixesByLength[MAX_STRING_LENGTH];
+    HTableString* suffixesByNoHyphensLength[MAX_STRING_LENGTH];
 } MasterPartsInfo;;
 
 HTableString* dictionary = NULL;
@@ -34,13 +34,13 @@ MasterPartsInfo* masterPartsInfo = NULL;
 PartsInfo* partsInfo = NULL;
 
 static void backward_fill(size_t* array) {
-    size_t tmp = array[MAX_LINE_LEN];
-    for (long i = (long)MAX_LINE_LEN; i >= 0; i--) {
-        if (array[i] == MAX_VALUE) {
-            array[i] = tmp;
+    size_t tmp = array[MAX_STRING_LENGTH - 1];
+    for (long length = (long)MAX_STRING_LENGTH - 1; length >= 0; length--) {
+        if (array[length] == MAX_VALUE) {
+            array[length] = tmp;
         }
         else {
-            tmp = array[i];
+            tmp = array[length];
         }
     }
 }
@@ -88,11 +88,11 @@ static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size
     mpInfo->masterPartsNoHyphensCount = masterPartsNoHyphensCount;
 
     // Create and populate start indices.
-    size_t startIndexByLength[MAX_LINE_LEN + 1] = { 0 };
-    size_t startIndexByLengthNoHyphens[MAX_LINE_LEN + 1] = { 0 };
-    for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
-        startIndexByLength[i] = MAX_VALUE;
-        startIndexByLengthNoHyphens[i] = MAX_VALUE;
+    size_t startIndexByLength[MAX_STRING_LENGTH] = { 0 };
+    size_t startIndexByLengthNoHyphens[MAX_STRING_LENGTH] = { 0 };
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
+        startIndexByLength[length] = MAX_VALUE;
+        startIndexByLengthNoHyphens[length] = MAX_VALUE;
     }
     for (size_t i = 0; i < masterPartsCount; i++) {
         size_t length = masterParts[i].partNumberLength;
@@ -110,11 +110,11 @@ static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size
     backward_fill(startIndexByLengthNoHyphens);
 
     // Create hash tables
-    for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
         mpInfo->suffixesByLength[length] = NULL;
         mpInfo->suffixesByNoHyphensLength[length] = NULL;
     }
-    for (size_t length = 3; length <= MAX_LINE_LEN; length++) {
+    for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
         HTableString* table = NULL;
         size_t startIndex = startIndexByLength[length];
         if (startIndex != MAX_VALUE) {
@@ -129,7 +129,7 @@ static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size
         }
         mpInfo->suffixesByLength[length] = table;
     }
-    for (size_t length = 3; length <= MAX_LINE_LEN; length++) {
+    for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
         HTableString* table = NULL;
         size_t startIndex = startIndexByLengthNoHyphens[length];
         if (startIndex != MAX_VALUE) {
@@ -155,7 +155,7 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
     size_t partsCount = 0;
     for (size_t i = 0; i < inputSize; i++) {
         const char* src = inputArray[i].partNumber;
-        char buffer[MAX_LINE_LEN];
+        char buffer[MAX_STRING_LENGTH];
         size_t bufferLength;
         to_upper_trim(src, buffer, sizeof(buffer), &bufferLength);
 
@@ -176,9 +176,9 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
     partsInfo->partsCount = partsCount;
 
     // Create and populate start indices.
-    size_t startIndexByLength[MAX_LINE_LEN + 1] = { 0 };
-    for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
-        startIndexByLength[i] = MAX_VALUE;
+    size_t startIndexByLength[MAX_STRING_LENGTH] = { 0 };
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
+        startIndexByLength[length] = MAX_VALUE;
     }
     for (size_t i = 0; i < partsCount; i++) {
         size_t length = parts[i].partNumberLength;
@@ -189,10 +189,10 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
     backward_fill(startIndexByLength);
 
     // Create hash tables
-    for (size_t length = 0; length <= MAX_LINE_LEN; length++) {
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
         partsInfo->suffixesByLength[length] = NULL;
     }
-    for (size_t length = 3; length <= MAX_LINE_LEN; length++) {
+    for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
         HTableSizeList* table = NULL;
         size_t startIndex = startIndexByLength[length];
         if (startIndex != MAX_VALUE) {
@@ -213,7 +213,7 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
 
 void processor_initialize(const SourceData* data) {
     masterPartsInfo = build_masterPartsInfo(data->masterParts, data->masterPartsCount);
-    partsInfo = build_partsInfo(data->parts, data->partsCount, 3);
+    partsInfo = build_partsInfo(data->parts, data->partsCount, MIN_STRING_LENGTH);
 
     dictionary = htable_string_create(partsInfo->partsCount);
 
@@ -254,10 +254,10 @@ void processor_initialize(const SourceData* data) {
 
 const char* processor_find_match(const char* partNumber) {
 
-    char buffer[MAX_LINE_LEN];
+    char buffer[MAX_STRING_LENGTH];
     size_t bufferLength;
     to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
-    if (bufferLength < 3) {
+    if (bufferLength < MIN_STRING_LENGTH) {
         return NULL;
     }
 
@@ -267,19 +267,19 @@ const char* processor_find_match(const char* partNumber) {
 
 void processor_clean() {
     free(masterPartsInfo->masterPartsNoHyphens);
-    for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
-        if (masterPartsInfo->suffixesByLength[i]) {
-            htable_string_free(masterPartsInfo->suffixesByLength[i]);
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
+        if (masterPartsInfo->suffixesByLength[length]) {
+            htable_string_free(masterPartsInfo->suffixesByLength[length]);
         }
-        if (masterPartsInfo->suffixesByNoHyphensLength[i]) {
-            htable_string_free(masterPartsInfo->suffixesByNoHyphensLength[i]);
+        if (masterPartsInfo->suffixesByNoHyphensLength[length]) {
+            htable_string_free(masterPartsInfo->suffixesByNoHyphensLength[length]);
         }
     }
     free(masterPartsInfo);
     free(partsInfo->parts);
-    for (size_t i = 0; i <= MAX_LINE_LEN; i++) {
-        if (partsInfo->suffixesByLength[i]) {
-            htable_sizelist_free(partsInfo->suffixesByLength[i]);
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
+        if (partsInfo->suffixesByLength[length]) {
+            htable_sizelist_free(partsInfo->suffixesByLength[length]);
         }
     }
     free(partsInfo);

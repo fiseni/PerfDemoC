@@ -35,10 +35,10 @@ void processor_initialize(const SourceData* data) {
 
 const char* processor_find_match(const char* partNumber) {
 
-    char buffer[MAX_LINE_LEN];
+    char buffer[MAX_STRING_LENGTH];
     size_t bufferLength;
     to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
-    if (bufferLength < 3) {
+    if (bufferLength < MIN_STRING_LENGTH) {
         return NULL;
     }
 

@@ -160,10 +160,9 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
         to_upper_trim(src, buffer, sizeof(buffer), &bufferLength);
 
         if (bufferLength >= minLength) {
-            Part* part = &parts[partsCount];
-            part->partNumberLength = bufferLength;
-            part->partNumber = strdup(buffer);
-            CHECK_ALLOC(part->partNumber);
+            parts[partsCount].partNumberLength = bufferLength;
+            parts[partsCount].partNumber = strdup(buffer);
+            CHECK_ALLOC(parts[partsCount].partNumber);
             partsCount++;
         }
     }
@@ -265,6 +264,7 @@ const char* processor_find_match(const char* partNumber) {
 }
 
 void processor_clean() {
+    free(masterPartsInfo->masterParts);
     free(masterPartsInfo->masterPartsNoHyphens);
     for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
         if (masterPartsInfo->suffixesByLength[length]) {
@@ -275,6 +275,10 @@ void processor_clean() {
         }
     }
     free(masterPartsInfo);
+    for (size_t i = 0; i < partsInfo->partsCount; i++) {
+        char* partNumber = (char*)partsInfo->parts[i].partNumber;
+        free(partNumber);
+    }
     free(partsInfo->parts);
     for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
         if (partsInfo->suffixesByLength[length]) {

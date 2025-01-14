@@ -38,10 +38,9 @@ HTableString* htable_string_create(size_t size) {
     for (size_t i = 0; i < tableSize; i++) {
         table->buckets[i] = NULL;
     }
-    size_t blockSize = tableSize * 2;
-    table->block = malloc(sizeof(EntryString) * blockSize);
+    table->block = malloc(sizeof(EntryString) * size);
     CHECK_ALLOC(table->block);
-    table->blockCount = blockSize;
+    table->blockCount = size;
     table->blockIndex = 0;
     return table;
 }
@@ -89,7 +88,7 @@ void htable_string_insert_if_not_exists(HTableString* table, const char* key, in
     table->buckets[index] = new_entry;
 }
 
-void htable_string_free(HTableString* table) {
+static void free_entries(HTableString* table) {
     for (size_t i = 0; i < table->size; i++) {
         EntryString* entry = table->buckets[i];
         while (entry) {
@@ -103,6 +102,12 @@ void htable_string_free(HTableString* table) {
             }
         }
     }
+}
+
+void htable_string_free(HTableString* table) {
+    // We're providing the appropriate size for the tables everywhere
+    // and malloc for individual entries will never occur.
+    // free_entries(table);
     free(table->block);
     free(table->buckets);
     free(table);

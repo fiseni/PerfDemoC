@@ -8,7 +8,7 @@ type="test"
 fi
 
 if [ "$impl" = "" ]; then
-impl="1"
+impl="4"
 fi
 
 FLAGS="-O3 -march=native -s -Wall -Wextra"

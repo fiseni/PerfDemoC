@@ -162,9 +162,8 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
         if (bufferLength >= minLength) {
             Part* part = &parts[partsCount];
             part->partNumberLength = bufferLength;
-            part->partNumber = malloc(bufferLength + 1);
+            part->partNumber = strdup(buffer);
             CHECK_ALLOC(part->partNumber);
-            strcpy((char*)part->partNumber, buffer);
             partsCount++;
         }
     }

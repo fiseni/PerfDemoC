@@ -25,11 +25,12 @@ static bool is_equal(const char* str1, const char* str2, size_t str2Length) {
 }
 
 static SizeList* sizelist_create() {
+    const size_t initial_list_capacity = 8;
     SizeList* list = malloc(sizeof(*list));
     CHECK_ALLOC(list);
-    list->values = malloc(8 * sizeof(size_t));
+    list->values = malloc(initial_list_capacity * sizeof(size_t));
     list->count = 0;
-    list->capacity = 8;
+    list->capacity = initial_list_capacity;
     return list;
 }
 

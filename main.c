@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     }
     else {
         double start = time_get_seconds();
-        SourceData* data = data_read(argc, argv);
+        const SourceData* data = data_read(argc, argv);
         printf("MasterParts Count: \t%zu\n", data->masterPartsCount);
         printf("Parts Count: \t\t%zu\n\n", data->partsCount);
         printf("Reading source data: \t\t%f seconds.\n", time_get_seconds() - start);

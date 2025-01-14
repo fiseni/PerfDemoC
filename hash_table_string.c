@@ -7,7 +7,7 @@
 #include "utils.h"
 #include "hash_table.h"
 
-static uint32_t hash(HTableString* table, const char* key, int keyLength) {
+static uint32_t hash(const HTableString* table, const char* key, int keyLength) {
     uint32_t hash = 0x811C9DC5; // 2166136261
     for (int i = 0; i < keyLength; i++) {
         hash = (hash * 31) + key[i];
@@ -46,7 +46,7 @@ HTableString* htable_string_create(size_t size) {
 }
 
 // Used to avoid re-computing the hash value.
-static const char* search_internal(HTableString* table, const char* key, int keyLength, unsigned int index) {
+static const char* search_internal(const HTableString* table, const char* key, int keyLength, unsigned int index) {
     EntryString* entry = table->buckets[index];
     while (entry) {
         //if (strcmp(entry->key, key) == 0) {
@@ -59,7 +59,7 @@ static const char* search_internal(HTableString* table, const char* key, int key
     return NULL;
 }
 
-const char* htable_string_search(HTableString* table, const char* key, int keyLength) {
+const char* htable_string_search(const HTableString* table, const char* key, int keyLength) {
     unsigned int index = hash(table, key, keyLength);
     return search_internal(table, key, keyLength, index);
 }

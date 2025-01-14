@@ -19,7 +19,7 @@ typedef struct HTableString {
 } HTableString;
 
 HTableString* htable_string_create(size_t size);
-const char* htable_string_search(HTableString* table, const char* key, int keyLength);
+const char* htable_string_search(const HTableString* table, const char* key, int keyLength);
 void htable_string_insert_if_not_exists(HTableString* table, const char* key, int keyLength, const char* value);
 void htable_string_free(HTableString* table);
 
@@ -43,7 +43,7 @@ typedef struct HTableSizeList {
 } HTableSizeList;
 
 HTableSizeList* htable_sizelist_create(size_t size);
-const SizeList* htable_sizelist_search(HTableSizeList* table, const char* key, int keyLength);
+const SizeList* htable_sizelist_search(const HTableSizeList* table, const char* key, int keyLength);
 void htable_sizelist_add(HTableSizeList* table, const char* key, int keyLength, size_t value);
 void htable_sizelist_free(HTableSizeList* table);
 

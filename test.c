@@ -75,7 +75,7 @@ void run_tests() {
         testPartNumbers[i] = testParts[i].partNumber;
     };
 
-    SourceData* data = data_build(testMasterPartNumbers, testMasterPartNumbersCount, testPartNumbers, testPartsCount);
+    const SourceData* data = data_build(testMasterPartNumbers, testMasterPartNumbersCount, testPartNumbers, testPartsCount);
     processor_initialize(data);
 
     for (size_t i = 0; i < testPartsCount; i++) {

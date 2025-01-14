@@ -54,7 +54,7 @@ static bool containsDash(const char* str, int strLength) {
     return false;
 }
 
-static MasterPart* build_masterPartsNyHyphen(MasterPart* masterParts, size_t masterPartsCount, size_t* outCount) {
+static MasterPart* build_masterPartsNyHyphen(const MasterPart* masterParts, size_t masterPartsCount, size_t* outCount) {
     MasterPart* masterPartsNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsNoHyphens));
     CHECK_ALLOC(masterPartsNoHyphens);
     size_t count = 0;
@@ -71,7 +71,11 @@ static MasterPart* build_masterPartsNyHyphen(MasterPart* masterParts, size_t mas
     return masterPartsNoHyphens;
 }
 
-static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t masterPartsCount) {
+static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size_t inputArrayCount) {
+    size_t masterPartsCount = inputArrayCount;
+    MasterPart* masterParts = malloc(masterPartsCount * sizeof(*masterParts));
+    CHECK_ALLOC(masterParts);
+    memcpy(masterParts, inputArray, masterPartsCount * sizeof(*masterParts));
     qsort(masterParts, masterPartsCount, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
     size_t masterPartsNoHyphensCount = 0;
     MasterPart* masterPartsNoHyphens = build_masterPartsNyHyphen(masterParts, masterPartsCount, &masterPartsNoHyphensCount);
@@ -119,7 +123,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
             }
             for (size_t i = startIndex; i < masterPartsCount; i++) {
                 MasterPart mp = masterParts[i];
-                char* suffix = mp.partNumber + (mp.partNumberLength - length);
+                const char* suffix = mp.partNumber + (mp.partNumberLength - length);
                 htable_string_insert_if_not_exists(table, suffix, (int)length, mp.partNumber);
             }
         }
@@ -134,7 +138,7 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
             }
             for (size_t i = startIndex; i < masterPartsNoHyphensCount; i++) {
                 MasterPart mp = masterPartsNoHyphens[i];
-                char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - length);
+                const char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - length);
                 htable_string_insert_if_not_exists(table, suffix, (int)length, mp.partNumber);
             }
         }
@@ -144,23 +148,23 @@ static MasterPartsInfo* build_masterPartsInfo(MasterPart* masterParts, size_t ma
     return mpInfo;
 }
 
-static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t minLen) {
+static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size_t minLength) {
     Part* parts = malloc(inputSize * sizeof(*parts));
     CHECK_ALLOC(parts);
 
     size_t partsCount = 0;
     for (size_t i = 0; i < inputSize; i++) {
-        char* src = inputArray[i].partNumber;
+        const char* src = inputArray[i].partNumber;
         char buffer[MAX_LINE_LEN];
         size_t bufferLength;
         to_upper_trim(src, buffer, sizeof(buffer), &bufferLength);
 
-        if (bufferLength >= minLen) {
+        if (bufferLength >= minLength) {
             Part* part = &parts[partsCount];
             part->partNumberLength = (int)bufferLength;
             part->partNumber = malloc(bufferLength + 1);
             CHECK_ALLOC(part->partNumber);
-            strcpy(part->partNumber, buffer);
+            strcpy((char*)part->partNumber, buffer);
             partsCount++;
         }
     }
@@ -197,7 +201,7 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
             }
             for (size_t i = startIndex; i < partsCount; i++) {
                 Part part = parts[i];
-                char* suffix = part.partNumber + (part.partNumberLength - length);
+                const char* suffix = part.partNumber + (part.partNumberLength - length);
                 htable_sizelist_add(table, suffix, (int)length, i);
             }
         }
@@ -207,7 +211,7 @@ static PartsInfo* build_partsInfo(Part* inputArray, size_t inputSize, size_t min
     return partsInfo;
 }
 
-void processor_initialize(SourceData* data) {
+void processor_initialize(const SourceData* data) {
     masterPartsInfo = build_masterPartsInfo(data->masterParts, data->masterPartsCount);
     partsInfo = build_partsInfo(data->parts, data->partsCount, 3);
 
@@ -248,7 +252,7 @@ void processor_initialize(SourceData* data) {
     }
 }
 
-const char* processor_find_match(char* partNumber) {
+const char* processor_find_match(const char* partNumber) {
 
     char buffer[MAX_LINE_LEN];
     size_t bufferLength;

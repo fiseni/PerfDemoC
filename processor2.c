@@ -43,9 +43,11 @@ static void forward_fill(size_t* array) {
     }
 }
 
-void processor_initialize(SourceData* data) {
-    masterPartsAsc = data->masterParts;
+void processor_initialize(const SourceData* data) {
     masterPartsCount = data->masterPartsCount;
+    masterPartsAsc = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAsc));
+    CHECK_ALLOC(masterPartsAsc);
+    memcpy(masterPartsAsc, data->masterParts, masterPartsCount * sizeof(*masterPartsAsc));
     qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
 
     masterPartsAscByNoHyphens = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
@@ -78,7 +80,7 @@ void processor_initialize(SourceData* data) {
     forward_fill(startIndexByLengthDesc);
 }
 
-const char* processor_find_match(char* partNumber) {
+const char* processor_find_match(const char* partNumber) {
 
     char buffer[MAX_LINE_LEN];
     size_t bufferLength;

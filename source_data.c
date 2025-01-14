@@ -5,19 +5,19 @@
 #include "utils.h"
 #include "source_data.h"
 
-static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLen, size_t* outSize) {
+static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLength, size_t* outSize) {
     MasterPart* outputArray = malloc(inputSize * sizeof(*outputArray));
     CHECK_ALLOC(outputArray);
 
     size_t count = 0;
     for (size_t i = 0; i < inputSize; i++) {
-        char* src = inputArray[i];
+        const char* src = inputArray[i];
 
         char buffer1[MAX_LINE_LEN];
         size_t buffer1_len;
         to_upper_trim(src, buffer1, sizeof(buffer1), &buffer1_len);
 
-        if (buffer1_len >= minLen) {
+        if (buffer1_len >= minLength) {
             char buffer2[MAX_LINE_LEN];
             size_t buffer2_len;
             remove_char(buffer1, buffer1_len, buffer2, sizeof(buffer2), '-', &buffer2_len);
@@ -29,8 +29,8 @@ static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_
 
             CHECK_ALLOC(outputArray[count].partNumber && outputArray[count].partNumberNoHyphens);
 
-            strcpy(outputArray[count].partNumber, buffer1);
-            strcpy(outputArray[count].partNumberNoHyphens, buffer2);
+            strcpy((char*)outputArray[count].partNumber, buffer1);
+            strcpy((char*)outputArray[count].partNumberNoHyphens, buffer2);
 
             count++;
         }
@@ -84,7 +84,7 @@ static char** read_file_lines(const char* filename, size_t* outLineCount) {
     return lines;
 }
 
-SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, char** partNumbers, size_t partNumbersCount) {
+const SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, char** partNumbers, size_t partNumbersCount) {
     size_t masterPartsCount = 0;
     MasterPart* masterParts = build_masterParts(masterPartNumbers, masterPartNumbersCount, 3, &masterPartsCount);
 
@@ -107,7 +107,7 @@ SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, 
     return data;
 }
 
-SourceData* data_read(int argc, char* argv[]) {
+const SourceData* data_read(int argc, char* argv[]) {
     char* partFile = "data/parts.txt";
     char* masterPartFile = "data/masterParts.txt";
     //partFile = "data/partsTest.txt";
@@ -125,7 +125,7 @@ SourceData* data_read(int argc, char* argv[]) {
     return data_build(masterPartNumbers, masterPartNumbersCount, partNumbers, partNumbersCount);
 }
 
-void data_print(SourceData* data) {
+void data_print(const SourceData* data) {
     for (size_t i = 0; i < data->masterPartsCount; i++) {
         printf("%s\n", data->masterParts[i].partNumber);
         printf("%s\n", data->masterParts[i].partNumberNoHyphens);

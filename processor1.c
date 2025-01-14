@@ -15,9 +15,11 @@ MasterPart* masterPartsAscByNoHyphens = NULL;
 MasterPart* masterPartsDesc = NULL;
 size_t masterPartsCount = 0;
 
-void processor_initialize(SourceData* data) {
+void processor_initialize(const SourceData* data) {
     masterPartsCount = data->masterPartsCount;
-    masterPartsAsc = data->masterParts;
+    masterPartsAsc = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAsc));
+    CHECK_ALLOC(masterPartsAsc);
+    memcpy(masterPartsAsc, data->masterParts, masterPartsCount * sizeof(*masterPartsAsc));
     qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
 
     masterPartsAscByNoHyphens = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
@@ -31,7 +33,7 @@ void processor_initialize(SourceData* data) {
     qsort(masterPartsDesc, masterPartsCount, sizeof(*masterPartsDesc), compare_mp_by_partNumber_length_desc);
 }
 
-const char* processor_find_match(char* partNumber) {
+const char* processor_find_match(const char* partNumber) {
 
     char buffer[MAX_LINE_LEN];
     size_t bufferLength;

@@ -7,7 +7,7 @@
 #include "utils.h"
 #include "hash_table.h"
 
-static uint32_t hash(HTableSizeList* table, const char* key, int keyLength) {
+static uint32_t hash(const HTableSizeList* table, const char* key, int keyLength) {
     uint32_t hash = 0x811C9DC5; // 2166136261
     for (int i = 0; i < keyLength; i++) {
         hash = (hash * 31) + key[i];
@@ -60,7 +60,7 @@ HTableSizeList* htable_sizelist_create(size_t size) {
     return table;
 }
 
-const SizeList* htable_sizelist_search(HTableSizeList* table, const char* key, int keyLength) {
+const SizeList* htable_sizelist_search(const HTableSizeList* table, const char* key, int keyLength) {
     unsigned int index = hash(table, key, keyLength);
     EntrySizeList* entry = table->buckets[index];
     while (entry) {

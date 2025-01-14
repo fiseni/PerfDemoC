@@ -21,7 +21,7 @@ size_t startIndexByLengthDesc[MAX_LINE_LEN + 1];
 
 static void backward_fill(size_t* array) {
     size_t tmp = array[MAX_LINE_LEN];
-    for (int i = (int)MAX_LINE_LEN; i >= 0; i--) {
+    for (long i = (long)MAX_LINE_LEN; i >= 0; i--) {
         if (array[i] == MAX_VALUE) {
             array[i] = tmp;
         }

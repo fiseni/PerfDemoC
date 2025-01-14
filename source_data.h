@@ -7,13 +7,13 @@
 typedef struct MasterPart {
     const char* partNumber;
     const char* partNumberNoHyphens;
-    int partNumberLength;
-    int partNumberNoHyphensLength;
+    size_t partNumberLength;
+    size_t partNumberNoHyphensLength;
 } MasterPart;
 
 typedef struct Part {
     const char* partNumber;
-    int partNumberLength;
+    size_t partNumberLength;
 } Part;
 
 typedef struct SourceData {

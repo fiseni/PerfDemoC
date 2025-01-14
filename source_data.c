@@ -22,8 +22,8 @@ static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_
             size_t buffer2_len;
             remove_char(buffer1, buffer1_len, buffer2, sizeof(buffer2), '-', &buffer2_len);
 
-            outputArray[count].partNumberLength = (int)buffer1_len;
-            outputArray[count].partNumberNoHyphensLength = (int)buffer2_len;
+            outputArray[count].partNumberLength = buffer1_len;
+            outputArray[count].partNumberNoHyphensLength = buffer2_len;
             outputArray[count].partNumber = malloc(buffer1_len + 1);
             outputArray[count].partNumberNoHyphens = malloc(buffer2_len + 1);
 
@@ -96,7 +96,7 @@ const SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersC
 
     for (size_t i = 0; i < partNumbersCount; i++) {
         parts[i].partNumber = partNumbers[i];
-        parts[i].partNumberLength = (int)strlen(partNumbers[i]);
+        parts[i].partNumberLength = strlen(partNumbers[i]);
     }
 
     data->masterParts = masterParts;

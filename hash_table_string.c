@@ -7,16 +7,16 @@
 #include "utils.h"
 #include "hash_table.h"
 
-static uint32_t hash(const HTableString* table, const char* key, int keyLength) {
-    uint32_t hash = 0x811C9DC5; // 2166136261
-    for (int i = 0; i < keyLength; i++) {
+static size_t hash(const HTableString* table, const char* key, size_t keyLength) {
+    size_t hash = 0x811C9DC5; // 2166136261
+    for (size_t i = 0; i < keyLength; i++) {
         hash = (hash * 31) + key[i];
     }
     return hash & (table->size - 1);
 }
 
-static bool is_equal(const char* str1, const char* str2, int str2Length) {
-    for (int i = 0; i < str2Length; i++) {
+static bool is_equal(const char* str1, const char* str2, size_t str2Length) {
+    for (size_t i = 0; i < str2Length; i++) {
         if (str1[i] == '\0' || str1[i] != str2[i]) {
             return false;
         }
@@ -46,7 +46,7 @@ HTableString* htable_string_create(size_t size) {
 }
 
 // Used to avoid re-computing the hash value.
-static const char* search_internal(const HTableString* table, const char* key, int keyLength, unsigned int index) {
+static const char* search_internal(const HTableString* table, const char* key, size_t keyLength, size_t index) {
     EntryString* entry = table->buckets[index];
     while (entry) {
         //if (strcmp(entry->key, key) == 0) {
@@ -59,13 +59,13 @@ static const char* search_internal(const HTableString* table, const char* key, i
     return NULL;
 }
 
-const char* htable_string_search(const HTableString* table, const char* key, int keyLength) {
-    unsigned int index = hash(table, key, keyLength);
+const char* htable_string_search(const HTableString* table, const char* key, size_t keyLength) {
+    size_t index = hash(table, key, keyLength);
     return search_internal(table, key, keyLength, index);
 }
 
-void htable_string_insert_if_not_exists(HTableString* table, const char* key, int keyLength, const char* value) {
-    unsigned int index = hash(table, key, keyLength);
+void htable_string_insert_if_not_exists(HTableString* table, const char* key, size_t keyLength, const char* value) {
+    size_t index = hash(table, key, keyLength);
     const char* existing_value = search_internal(table, key, keyLength, index);
     if (existing_value) {
         return;
@@ -74,12 +74,12 @@ void htable_string_insert_if_not_exists(HTableString* table, const char* key, in
     EntryString* new_entry;
     if (table->blockIndex < table->blockCount) {
         new_entry = &table->block[table->blockIndex++];
-        new_entry->allocatedFromBlock = 1;
+        new_entry->isAllocatedFromBlock = 1;
     }
     else {
         new_entry = malloc(sizeof(EntryString));
         CHECK_ALLOC(new_entry);
-        new_entry->allocatedFromBlock = 0;
+        new_entry->isAllocatedFromBlock = 0;
     }
 
     new_entry->key = key;
@@ -92,7 +92,7 @@ static void free_entries(HTableString* table) {
     for (size_t i = 0; i < table->size; i++) {
         EntryString* entry = table->buckets[i];
         while (entry) {
-            if (entry->allocatedFromBlock == 0) {
+            if (entry->isAllocatedFromBlock == 0) {
                 EntryString* temp = entry;
                 entry = entry->next;
                 free(temp);

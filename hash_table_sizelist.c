@@ -7,16 +7,16 @@
 #include "utils.h"
 #include "hash_table.h"
 
-static uint32_t hash(const HTableSizeList* table, const char* key, int keyLength) {
-    uint32_t hash = 0x811C9DC5; // 2166136261
-    for (int i = 0; i < keyLength; i++) {
+static size_t hash(const HTableSizeList* table, const char* key, size_t keyLength) {
+    size_t hash = 0x811C9DC5; // 2166136261
+    for (size_t i = 0; i < keyLength; i++) {
         hash = (hash * 31) + key[i];
     }
     return hash & (table->size - 1);
 }
 
-static bool is_equal(const char* str1, const char* str2, int str2Length) {
-    for (int i = 0; i < str2Length; i++) {
+static bool is_equal(const char* str1, const char* str2, size_t str2Length) {
+    for (size_t i = 0; i < str2Length; i++) {
         if (str1[i] == '\0' || str1[i] != str2[i]) {
             return false;
         }
@@ -60,8 +60,8 @@ HTableSizeList* htable_sizelist_create(size_t size) {
     return table;
 }
 
-const SizeList* htable_sizelist_search(const HTableSizeList* table, const char* key, int keyLength) {
-    unsigned int index = hash(table, key, keyLength);
+const SizeList* htable_sizelist_search(const HTableSizeList* table, const char* key, size_t keyLength) {
+    size_t index = hash(table, key, keyLength);
     EntrySizeList* entry = table->buckets[index];
     while (entry) {
         //if (strcmp(entry->key, key) == 0) {
@@ -73,8 +73,8 @@ const SizeList* htable_sizelist_search(const HTableSizeList* table, const char* 
     return NULL;
 }
 
-void htable_sizelist_add(HTableSizeList* table, const char* key, int keyLength, size_t value) {
-    unsigned int index = hash(table, key, keyLength);
+void htable_sizelist_add(HTableSizeList* table, const char* key, size_t keyLength, size_t value) {
+    size_t index = hash(table, key, keyLength);
     EntrySizeList* entry = table->buckets[index];
 
     // Search for existing key

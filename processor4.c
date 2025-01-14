@@ -35,7 +35,7 @@ PartsInfo* partsInfo = NULL;
 
 static void backward_fill(size_t* array) {
     size_t tmp = array[MAX_LINE_LEN];
-    for (int i = (int)MAX_LINE_LEN; i >= 0; i--) {
+    for (long i = (long)MAX_LINE_LEN; i >= 0; i--) {
         if (array[i] == MAX_VALUE) {
             array[i] = tmp;
         }
@@ -45,8 +45,8 @@ static void backward_fill(size_t* array) {
     }
 }
 
-static bool containsDash(const char* str, int strLength) {
-    for (int i = 0; i < strLength; i++) {
+static bool containsDash(const char* str, size_t strLength) {
+    for (size_t i = 0; i < strLength; i++) {
         if (str[i] == '-') {
             return true;
         }
@@ -124,7 +124,7 @@ static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size
             for (size_t i = startIndex; i < masterPartsCount; i++) {
                 MasterPart mp = masterParts[i];
                 const char* suffix = mp.partNumber + (mp.partNumberLength - length);
-                htable_string_insert_if_not_exists(table, suffix, (int)length, mp.partNumber);
+                htable_string_insert_if_not_exists(table, suffix, length, mp.partNumber);
             }
         }
         mpInfo->suffixesByLength[length] = table;
@@ -139,7 +139,7 @@ static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size
             for (size_t i = startIndex; i < masterPartsNoHyphensCount; i++) {
                 MasterPart mp = masterPartsNoHyphens[i];
                 const char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - length);
-                htable_string_insert_if_not_exists(table, suffix, (int)length, mp.partNumber);
+                htable_string_insert_if_not_exists(table, suffix, length, mp.partNumber);
             }
         }
         mpInfo->suffixesByNoHyphensLength[length] = table;
@@ -161,7 +161,7 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
 
         if (bufferLength >= minLength) {
             Part* part = &parts[partsCount];
-            part->partNumberLength = (int)bufferLength;
+            part->partNumberLength = bufferLength;
             part->partNumber = malloc(bufferLength + 1);
             CHECK_ALLOC(part->partNumber);
             strcpy((char*)part->partNumber, buffer);
@@ -202,7 +202,7 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
             for (size_t i = startIndex; i < partsCount; i++) {
                 Part part = parts[i];
                 const char* suffix = part.partNumber + (part.partNumberLength - length);
-                htable_sizelist_add(table, suffix, (int)length, i);
+                htable_sizelist_add(table, suffix, length, i);
             }
         }
         partsInfo->suffixesByLength[length] = table;
@@ -236,13 +236,13 @@ void processor_initialize(const SourceData* data) {
         }
     }
 
-    for (int i = (int)masterPartsInfo->masterPartsCount - 1; i >= 0; i--) {
+    for (long i = (long)masterPartsInfo->masterPartsCount - 1; i >= 0; i--) {
         MasterPart mp = masterPartsInfo->masterParts[i];
         HTableSizeList* partsBySuffix = partsInfo->suffixesByLength[mp.partNumberLength];
         if (partsBySuffix) {
             const SizeList* originalParts = htable_sizelist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
             if (originalParts) {
-                for (int j = (int)originalParts->count - 1; j >= 0; j--) {
+                for (long j = (long)originalParts->count - 1; j >= 0; j--) {
                     size_t originalPartIndex = originalParts->values[j];
                     Part part = partsInfo->parts[originalPartIndex];
                     htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, mp.partNumber);
@@ -261,7 +261,7 @@ const char* processor_find_match(const char* partNumber) {
         return NULL;
     }
 
-    const char* match = htable_string_search(dictionary, buffer, (int)bufferLength);
+    const char* match = htable_string_search(dictionary, buffer, bufferLength);
     return match;
 }
 

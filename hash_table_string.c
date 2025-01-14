@@ -33,12 +33,12 @@ HTableString* htable_string_create(size_t size) {
     HTableString* table = malloc(sizeof(*table));
     CHECK_ALLOC(table);
     table->size = tableSize;
-    table->buckets = malloc(sizeof(EntryString*) * tableSize);
+    table->buckets = malloc(sizeof(*table->buckets) * tableSize);
     CHECK_ALLOC(table->buckets);
     for (size_t i = 0; i < tableSize; i++) {
         table->buckets[i] = NULL;
     }
-    table->block = malloc(sizeof(EntryString) * size);
+    table->block = malloc(sizeof(*table->block) * size);
     CHECK_ALLOC(table->block);
     table->blockCount = size;
     table->blockIndex = 0;
@@ -77,7 +77,7 @@ void htable_string_insert_if_not_exists(HTableString* table, const char* key, si
         new_entry->isAllocatedFromBlock = 1;
     }
     else {
-        new_entry = malloc(sizeof(EntryString));
+        new_entry = malloc(sizeof(*new_entry));
         CHECK_ALLOC(new_entry);
         new_entry->isAllocatedFromBlock = 0;
     }

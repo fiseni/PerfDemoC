@@ -363,6 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 Asm
-results
-demo
-demo.exe
+result*
+demo*

@@ -24,26 +24,28 @@ void htable_string_insert_if_not_exists(HTableString* table, const char* key, si
 void htable_string_free(HTableString* table);
 
 // #########################################################
-// Hash table storing a list of size_t as value.
-typedef struct SizeList {
-    size_t* values;
-    size_t count;
-    size_t capacity;
-} SizeList;
+// Hash table storing a linked list of size_t as value.
+typedef struct ListItem {
+    size_t value;
+    struct ListItem* next;
+} ListItem;
 
 typedef struct EntrySizeList {
     const char* key;
-    SizeList* list;
+    ListItem* list;
     struct EntrySizeList* next;
 } EntrySizeList;
 
 typedef struct HTableSizeList {
     EntrySizeList** buckets;
     size_t size;
+    ListItem* block;
+    size_t blockCount;
+    size_t blockIndex;
 } HTableSizeList;
 
 HTableSizeList* htable_sizelist_create(size_t size);
-const SizeList* htable_sizelist_search(const HTableSizeList* table, const char* key, size_t keyLength);
+const ListItem* htable_sizelist_search(const HTableSizeList* table, const char* key, size_t keyLength);
 void htable_sizelist_add(HTableSizeList* table, const char* key, size_t keyLength, size_t value);
 void htable_sizelist_free(HTableSizeList* table);
 

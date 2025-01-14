@@ -238,13 +238,12 @@ void processor_initialize(const SourceData* data) {
         MasterPart mp = masterPartsInfo->masterParts[i];
         HTableSizeList* partsBySuffix = partsInfo->suffixesByLength[mp.partNumberLength];
         if (partsBySuffix) {
-            const SizeList* originalParts = htable_sizelist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
-            if (originalParts) {
-                for (long j = (long)originalParts->count - 1; j >= 0; j--) {
-                    size_t originalPartIndex = originalParts->values[j];
-                    Part part = partsInfo->parts[originalPartIndex];
-                    htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, mp.partNumber);
-                }
+            const ListItem* originalParts = htable_sizelist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
+            while (originalParts) {
+                size_t originalPartIndex = originalParts->value;
+                Part part = partsInfo->parts[originalPartIndex];
+                htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, mp.partNumber);
+                originalParts = originalParts->next;
             }
         }
     }

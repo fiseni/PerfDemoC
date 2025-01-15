@@ -151,6 +151,7 @@
     <ClCompile Include="test.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="test.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="cross_platform_time.h" />
     <ClInclude Include="source_data.h" />

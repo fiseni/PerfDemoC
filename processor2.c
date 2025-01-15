@@ -6,41 +6,61 @@
 #include "source_data.h"
 #include "processor.h"
 
-const size_t MAX_VALUE = ((size_t)-1);
+const char* processor_get_identifier() { return "Processor2"; }
 
-const char* processor_get_identifier() {
-    return "Processor2";
-}
+static int compare_mp_by_partNumber_length_asc(const void* a, const void* b);
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b);
+static void backward_fill(size_t* array);
+static void forward_fill(size_t* array);
 
-MasterPart* masterPartsAsc = NULL;
-MasterPart* masterPartsAscByNoHyphens = NULL;
-size_t masterPartsCount = 0;
-size_t startIndexByLengthAsc[MAX_STRING_LENGTH];
-size_t startIndexByLengthAscNoHyphens[MAX_STRING_LENGTH];
-size_t startIndexByLengthDesc[MAX_STRING_LENGTH];
+static const size_t MAX_VALUE = ((size_t)-1);
+static MasterPart* masterPartsAsc = NULL;
+static MasterPart* masterPartsAscByNoHyphens = NULL;
+static size_t masterPartsCount = 0;
+static size_t startIndexByLengthAsc[MAX_STRING_LENGTH];
+static size_t startIndexByLengthAscNoHyphens[MAX_STRING_LENGTH];
+static size_t startIndexByLengthDesc[MAX_STRING_LENGTH];
 
-static void backward_fill(size_t* array) {
-    size_t tmp = array[MAX_STRING_LENGTH - 1];
-    for (long length = (long)MAX_STRING_LENGTH - 1; length >= 0; length--) {
-        if (array[length] == MAX_VALUE) {
-            array[length] = tmp;
-        }
-        else {
-            tmp = array[length];
+const char* processor_find_match(const char* partNumber) {
+
+    char buffer[MAX_STRING_LENGTH];
+    size_t bufferLength;
+    str_to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
+    if (bufferLength < MIN_STRING_LENGTH) {
+        return NULL;
+    }
+
+    size_t startIndex = startIndexByLengthAsc[bufferLength];
+    if (startIndex != MAX_VALUE) {
+        for (size_t i = startIndex; i < masterPartsCount; i++) {
+            MasterPart mp = masterPartsAsc[i];
+            if (str_is_suffix_vectorized(buffer, bufferLength, mp.partNumber, mp.partNumberLength)) {
+                return mp.partNumber;
+            }
         }
     }
-}
 
-static void forward_fill(size_t* array) {
-    size_t tmp = array[0];
-    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
-        if (array[length] == MAX_VALUE) {
-            array[length] = tmp;
-        }
-        else {
-            tmp = array[length];
+    startIndex = startIndexByLengthAscNoHyphens[bufferLength];
+    if (startIndex != MAX_VALUE) {
+        for (size_t i = startIndex; i < masterPartsCount; i++) {
+            MasterPart mp = masterPartsAscByNoHyphens[i];
+            if (str_is_suffix_vectorized(buffer, bufferLength, mp.partNumberNoHyphens, mp.partNumberNoHyphensLength)) {
+                return mp.partNumber;
+            }
         }
     }
+
+    startIndex = startIndexByLengthDesc[bufferLength];
+    if (startIndex != MAX_VALUE) {
+        for (long i = (long)startIndex; i >= 0; i--) {
+            MasterPart mp = masterPartsAsc[i];
+            if (str_is_suffix_vectorized(mp.partNumber, mp.partNumberLength, buffer, bufferLength)) {
+                return mp.partNumber;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 void processor_initialize(const SourceData* data) {
@@ -80,51 +100,45 @@ void processor_initialize(const SourceData* data) {
     forward_fill(startIndexByLengthDesc);
 }
 
-const char* processor_find_match(const char* partNumber) {
-
-    char buffer[MAX_STRING_LENGTH];
-    size_t bufferLength;
-    to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
-    if (bufferLength < MIN_STRING_LENGTH) {
-        return NULL;
-    }
-
-    size_t startIndex = startIndexByLengthAsc[bufferLength];
-    if (startIndex != MAX_VALUE) {
-        for (size_t i = startIndex; i < masterPartsCount; i++) {
-            MasterPart mp = masterPartsAsc[i];
-            if (is_suffix_vectorized(buffer, bufferLength, mp.partNumber, mp.partNumberLength)) {
-                return mp.partNumber;
-            }
-        }
-    }
-
-    startIndex = startIndexByLengthAscNoHyphens[bufferLength];
-    if (startIndex != MAX_VALUE) {
-        for (size_t i = startIndex; i < masterPartsCount; i++) {
-            MasterPart mp = masterPartsAscByNoHyphens[i];
-            if (is_suffix_vectorized(buffer, bufferLength, mp.partNumberNoHyphens, mp.partNumberNoHyphensLength)) {
-                return mp.partNumber;
-            }
-        }
-    }
-
-    startIndex = startIndexByLengthDesc[bufferLength];
-    if (startIndex != MAX_VALUE) {
-        for (long i = (long)startIndex; i >= 0; i--) {
-            MasterPart mp = masterPartsAsc[i];
-            if (is_suffix_vectorized(mp.partNumber, mp.partNumberLength, buffer, bufferLength)) {
-                return mp.partNumber;
-            }
-        }
-    }
-
-    return NULL;
-}
-
 void processor_clean() {
     if (masterPartsAscByNoHyphens) {
         free(masterPartsAscByNoHyphens);
         masterPartsAscByNoHyphens = NULL;
     }
+}
+
+static void backward_fill(size_t* array) {
+    size_t tmp = array[MAX_STRING_LENGTH - 1];
+    for (long length = (long)MAX_STRING_LENGTH - 1; length >= 0; length--) {
+        if (array[length] == MAX_VALUE) {
+            array[length] = tmp;
+        }
+        else {
+            tmp = array[length];
+        }
+    }
+}
+
+static void forward_fill(size_t* array) {
+    size_t tmp = array[0];
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
+        if (array[length] == MAX_VALUE) {
+            array[length] = tmp;
+        }
+        else {
+            tmp = array[length];
+        }
+    }
+}
+
+static int compare_mp_by_partNumber_length_asc(const void* a, const void* b) {
+    size_t lenA = ((const MasterPart*)a)->partNumberLength;
+    size_t lenB = ((const MasterPart*)b)->partNumberLength;
+    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+}
+
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b) {
+    size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
+    size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
+    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }

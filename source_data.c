@@ -1,163 +1,194 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <assert.h>
 #include "utils.h"
+#include "cross_platform_time.h"
 #include "source_data.h"
 
-static MasterPart* build_masterParts(char* inputArray[], size_t inputSize, size_t minLength, size_t* outSize) {
-    MasterPart* outputArray = malloc(inputSize * sizeof(*outputArray));
-    CHECK_ALLOC(outputArray);
+static Part* build_parts(const char* partsPath, size_t* outCount);
+static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCount);
+static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t length);
 
-    size_t count = 0;
-    for (size_t i = 0; i < inputSize; i++) {
-        const char* src = inputArray[i];
-
-        char buffer1[MAX_STRING_LENGTH];
-        size_t buffer1_len;
-        to_upper_trim(src, buffer1, sizeof(buffer1), &buffer1_len);
-
-        if (buffer1_len >= minLength) {
-            char buffer2[MAX_STRING_LENGTH];
-            size_t buffer2_len;
-            remove_char(buffer1, buffer1_len, buffer2, sizeof(buffer2), '-', &buffer2_len);
-
-            outputArray[count].partNumberLength = buffer1_len;
-            outputArray[count].partNumberNoHyphensLength = buffer2_len;
-            outputArray[count].partNumber = malloc(buffer1_len + 1);
-            outputArray[count].partNumberNoHyphens = malloc(buffer2_len + 1);
-
-            CHECK_ALLOC(outputArray[count].partNumber && outputArray[count].partNumberNoHyphens);
-
-            strcpy((char*)outputArray[count].partNumber, buffer1);
-            strcpy((char*)outputArray[count].partNumberNoHyphens, buffer2);
-
-            count++;
-        }
-    }
-
-    *outSize = count;
-    return outputArray;
-}
-
-static char** read_file_lines(const char* filename, size_t* outLineCount) {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        fprintf(stderr, "Failed to open file: %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    // First pass: count lines
-    size_t lineCount = 0;
-    char buffer[MAX_STRING_LENGTH];
-    while (fgets(buffer, sizeof(buffer), file)) {
-        lineCount++;
-    }
-
-    // Rewind file pointer to beginning
-    rewind(file);
-
-    // Allocate array of pointers for lines
-    char** lines = malloc(lineCount * sizeof(*lines));
-    CHECK_ALLOC(lines);
-
-    // Second pass: read lines and store them
-    for (size_t i = 0; i < lineCount; i++) {
-        if (!fgets(buffer, sizeof(buffer), file)) {
-            fprintf(stderr, "Failed to read line %zu\n", i);
-            exit(EXIT_FAILURE);
-        }
-
-        //size_t len = strlen(buffer);
-        //if (len > 0 && buffer[len - 1] == '\n')
-        //{
-        //	buffer[len - 1] = '\0';
-        //}
-        buffer[strcspn(buffer, "\r\n")] = '\0';
-
-        lines[i] = strdup(buffer);
-        CHECK_ALLOC(lines[i]);
-    }
-
-    fclose(file);
-    *outLineCount = lineCount;
-    return lines;
-}
-
-const SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, char** partNumbers, size_t partNumbersCount) {
+const SourceData* source_data_read(const char* masterPartsPath, const char* partsPath) {
     size_t masterPartsCount = 0;
-    MasterPart* masterParts = build_masterParts(masterPartNumbers, masterPartNumbersCount, MIN_STRING_LENGTH, &masterPartsCount);
+    MasterPart* masterParts = build_masterParts(masterPartsPath, &masterPartsCount);
+    size_t partsCount = 0;
+    Part* parts = build_parts(partsPath, &partsCount);
 
     SourceData* data = (SourceData*)malloc(sizeof(*data));
     CHECK_ALLOC(data);
-
-    Part* parts = malloc(partNumbersCount * sizeof(*parts));
-    CHECK_ALLOC(parts);
-
-    for (size_t i = 0; i < partNumbersCount; i++) {
-        parts[i].partNumber = partNumbers[i];
-        parts[i].partNumberLength = strlen(partNumbers[i]);
-    }
-
     data->masterParts = masterParts;
     data->masterPartsCount = masterPartsCount;
     data->parts = parts;
-    data->partsCount = partNumbersCount;
+    data->partsCount = partsCount;
 
     return data;
 }
 
-const SourceData* data_read(int argc, char* argv[]) {
-    char* partFile = "data/parts.txt";
-    char* masterPartFile = "data/masterParts.txt";
-    //partFile = "data/partsTest.txt";
-    //masterPartFile = "data/masterPartsTest.txt";
+void source_data_clean(SourceData* data) {
+    // All strings are allocated from a single block
+    free((void*)data->masterParts->partNumber);
+    free((void*)data->parts->partNumber);
 
-    if (argc > 1 && strcmp(argv[1], "short") == 0) {
-        partFile = "data/partsShort.txt";
-        masterPartFile = "data/masterPartsShort.txt";
-    }
-    size_t partNumbersCount = 0;
-    char** partNumbers = read_file_lines(partFile, &partNumbersCount);
-    size_t masterPartNumbersCount = 0;
-    char** masterPartNumbers = read_file_lines(masterPartFile, &masterPartNumbersCount);
-
-    return data_build(masterPartNumbers, masterPartNumbersCount, partNumbers, partNumbersCount);
+    free((void*)data->masterParts);
+    free((void*)data->parts);
+    free((void*)data);
 }
 
-void data_print(const SourceData* data) {
-    for (size_t i = 0; i < data->masterPartsCount; i++) {
-        printf("%s\n", data->masterParts[i].partNumber);
-        printf("%s\n", data->masterParts[i].partNumberNoHyphens);
+static Part* build_parts(const char* partsPath, size_t* outCount) {
+    size_t fileSize = get_file_size_bytes(partsPath);
+    FILE* file = fopen(partsPath, "r");
+    if (!file) {
+        fprintf(stderr, "Failed to open parts file: %s\n", partsPath);
+        exit(EXIT_FAILURE);
     }
 
-    printf("#################################\n");
+    size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize;
+    char* block = malloc(blockSize);
+    CHECK_ALLOC(block);
+
+    size_t blockIndex = 0;
+    size_t lineCount = 0;
+    size_t bytes_read;
+    size_t bufferSize = 16000 < fileSize ? 16000 : fileSize;
+
+    char* buffer = &block[blockIndex];
+    while ((bytes_read = fread(buffer, 1, bufferSize, file)) > 0) {
+        for (size_t i = 0; i < bytes_read; ++i) {
+            if (buffer[i] == '\n') {
+                lineCount++;
+            }
+        }
+        blockIndex += bytes_read;
+        if (blockIndex + bufferSize > blockSize) {
+            fprintf(stderr, "Buffer overflow detected while reading parts.\n");
+            free(block);
+            fclose(file);
+            exit(EXIT_FAILURE);
+        }
+        buffer = &block[blockIndex];
+    }
+    // Handle the case where the last line might not end with a newline
+    if (blockIndex > 0 && block[blockIndex - 1] != '\n') {
+        lineCount++;
+    }
+
+    Part* parts = malloc(lineCount * sizeof(*parts));
+    CHECK_ALLOC(parts);
+
+    size_t stringStartIndex = 0;
+    size_t partsIndex = 0;
+    for (size_t i = 0; i < blockIndex; i++) {
+        if (block[i] == '\n') {
+            block[i] = '\0';
+            parts[partsIndex].partNumber = &block[stringStartIndex];
+            parts[partsIndex].partNumberLength = i - stringStartIndex;
+            partsIndex++;
+            stringStartIndex = i + 1;
+        }
+    }
+
+    // Handle the last line if it doesn't end with a newline
+    if (stringStartIndex < blockIndex) {
+        parts[partsIndex].partNumber = &block[stringStartIndex];
+        parts[partsIndex].partNumberLength = blockIndex - stringStartIndex;
+        partsIndex++;
+    }
+
+    fclose(file);
+    *outCount = partsIndex;
+    return parts;
 }
 
-int compare_mp_by_partNumber_length_asc(const void* a, const void* b) {
-    size_t lenA = ((const MasterPart*)a)->partNumberLength;
-    size_t lenB = ((const MasterPart*)b)->partNumberLength;
-    // Compare lengths for ascending order
-    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCount) {
+    size_t fileSize = get_file_size_bytes(masterPartsPath);
+    FILE* file = fopen(masterPartsPath, "r");
+    if (!file) {
+        fprintf(stderr, "Failed to open file: %s\n", masterPartsPath);
+        exit(EXIT_FAILURE);
+    }
+
+    size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize;
+    char* block = malloc(blockSize);
+    CHECK_ALLOC(block);
+
+    size_t blockIndex = 0;
+    size_t lineCount = 0;
+    size_t bytes_read;
+    size_t bufferSize = 16000 < fileSize ? 16000 : fileSize;
+
+    char* buffer = &block[blockIndex];
+    while ((bytes_read = fread(buffer, 1, bufferSize, file)) > 0) {
+        for (size_t i = 0; i < bytes_read; ++i) {
+            if (buffer[i] == '\n') {
+                lineCount++;
+            }
+        }
+        blockIndex += bytes_read;
+        if (blockIndex + bufferSize > blockSize) {
+            fprintf(stderr, "Buffer overflow detected while reading masterParts.\n");
+            free(block);
+            fclose(file);
+            exit(EXIT_FAILURE);
+        }
+        buffer = &block[blockIndex];
+    }
+    // Handle the case where the last line might not end with a newline
+    if (blockIndex > 0 && block[blockIndex - 1] != '\n') {
+        lineCount++;
+    }
+
+    MasterPart* masterParts = malloc(lineCount * sizeof(*masterParts));
+    CHECK_ALLOC(masterParts);
+
+    size_t stringStartIndex = 0;
+    size_t masterPartsIndex = 0;
+    for (size_t i = 0; i < blockIndex; i++) {
+        if (block[i] == '\n') {
+            block[i] = '\0';
+            size_t length = i - stringStartIndex;
+            if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length)) {
+                masterPartsIndex++;
+            }
+            stringStartIndex = i + 1;
+        }
+    }
+
+    // Handle the last line if it doesn't end with a newline
+    if (stringStartIndex < blockIndex) {
+        size_t length = blockIndex - stringStartIndex;
+        if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length)) {
+            masterPartsIndex++;
+        }
+    }
+
+    fclose(file);
+    *outCount = masterPartsIndex;
+    return masterParts;
 }
 
-int compare_mp_by_partNumber_length_desc(const void* a, const void* b) {
-    size_t lenA = ((const MasterPart*)a)->partNumberLength;
-    size_t lenB = ((const MasterPart*)b)->partNumberLength;
-    // Compare lengths for descending order
-    return lenA < lenB ? 1 : lenA > lenB ? -1 : 0;
-}
+static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t length) {
+    if (length < MIN_STRING_LENGTH) {
+        return false;
+    }
+    size_t partNumberLength;
+    str_to_upper_trim_in_place(partNumber, length, &partNumberLength);
 
-int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b) {
-    size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
-    size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
-    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
-}
+    masterPart->partNumber = partNumber;
+    masterPart->partNumberLength = partNumberLength;
 
-int compare_part_by_partNumber_length_asc(const void* a, const void* b) {
-    size_t lenA = ((const Part*)a)->partNumberLength;
-    size_t lenB = ((const Part*)b)->partNumberLength;
-
-    // Compare lengths for ascending order
-    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+    if (str_contains_dash(partNumber, partNumberLength)) {
+        char* partNumberNoHyphens = malloc(partNumberLength);
+        size_t partNumberNoHyphensLength;
+        str_remove_char(partNumber, partNumberLength, partNumberNoHyphens, partNumberLength, '-', &partNumberNoHyphensLength);
+        masterPart->partNumberNoHyphens = partNumberNoHyphens;
+        masterPart->partNumberNoHyphensLength = partNumberNoHyphensLength;
+    }
+    else {
+        masterPart->partNumberNoHyphens = partNumber;
+        masterPart->partNumberNoHyphensLength = partNumberLength;
+    }
+    return true;
 }

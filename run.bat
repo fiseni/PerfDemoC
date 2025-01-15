@@ -1,13 +1,19 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "type=%1"
-set "impl=%2"
+set "arg1=data/masterParts.txt"
+set "arg2=data/parts.txt"
 
-if "%type%"=="" (
-    set "type=test"
+if "%1"=="short" (
+    set "arg1=data/masterPartsShort.txt"
+    set "arg2=data/partsShort.txt"
+)
+if "%1"=="test" (
+    set "arg1=test"
+    set "arg2="
 )
 
+set "impl=%2"
 if "%impl%"=="" (
     set "impl=4"
 )
@@ -24,7 +30,7 @@ if "%type%"=="echo" (
         echo Build failed.
         exit /b 1
     )
-    demo.exe %type%
+    demo.exe %arg1% %arg2%
     del *.obj
 )
 

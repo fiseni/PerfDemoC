@@ -1,18 +1,17 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "utils.h"
 #include "hash_table.h"
-#include "source_data.h"
 #include "cross_platform_time.h"
 #include "processor.h"
 
-const size_t MAX_VALUE = ((size_t)-1);
+const char* processor_get_identifier() { return "Processor4"; }
 
-const char* processor_get_identifier() {
-    return "Processor4";
-}
+static int compare_mp_by_partNumber_length_asc(const void* a, const void* b);
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b);
+static int compare_part_by_partNumber_length_asc(const void* a, const void* b);
+static void backward_fill(size_t* array);
 
 typedef struct PartsInfo {
     Part* parts;
@@ -29,57 +28,113 @@ typedef struct MasterPartsInfo {
     HTableString* suffixesByNoHyphensLength[MAX_STRING_LENGTH];
 } MasterPartsInfo;;
 
-HTableString* dictionary = NULL;
-MasterPartsInfo* masterPartsInfo = NULL;
-PartsInfo* partsInfo = NULL;
+static const size_t MAX_VALUE = ((size_t)-1);
+static HTableString* dictionary = NULL;
+static MasterPartsInfo* masterPartsInfo = NULL;
+static PartsInfo* partsInfo = NULL;
 
-static void backward_fill(size_t* array) {
-    size_t tmp = array[MAX_STRING_LENGTH - 1];
-    for (long length = (long)MAX_STRING_LENGTH - 1; length >= 0; length--) {
-        if (array[length] == MAX_VALUE) {
-            array[length] = tmp;
+const char* processor_find_match(const char* partNumber) {
+
+    char buffer[MAX_STRING_LENGTH];
+    size_t bufferLength;
+    str_to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
+    if (bufferLength < MIN_STRING_LENGTH) {
+        return NULL;
+    }
+
+    const char* match = htable_string_search(dictionary, buffer, bufferLength);
+    return match;
+}
+
+static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size_t inputArrayCount);
+static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size_t minLength);
+
+void processor_initialize(const SourceData* data) {
+    masterPartsInfo = build_masterPartsInfo(data->masterParts, data->masterPartsCount);
+    partsInfo = build_partsInfo(data->parts, data->partsCount, MIN_STRING_LENGTH);
+
+    dictionary = htable_string_create(partsInfo->partsCount);
+
+    for (size_t i = 0; i < partsInfo->partsCount; i++) {
+        Part part = partsInfo->parts[i];
+
+        HTableString* masterPartsBySuffix = masterPartsInfo->suffixesByLength[part.partNumberLength];
+        if (masterPartsBySuffix) {
+            const char* match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
+            if (match) {
+                htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
+            }
         }
-        else {
-            tmp = array[length];
+        masterPartsBySuffix = masterPartsInfo->suffixesByNoHyphensLength[part.partNumberLength];
+        if (masterPartsBySuffix) {
+            const char* match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
+            if (match) {
+                htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
+            }
+        }
+    }
+
+    for (long i = (long)masterPartsInfo->masterPartsCount - 1; i >= 0; i--) {
+        MasterPart mp = masterPartsInfo->masterParts[i];
+        HTableSizeList* partsBySuffix = partsInfo->suffixesByLength[mp.partNumberLength];
+        if (partsBySuffix) {
+            const ListItem* originalParts = htable_sizelist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
+            while (originalParts) {
+                size_t originalPartIndex = originalParts->value;
+                Part part = partsInfo->parts[originalPartIndex];
+                htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, mp.partNumber);
+                originalParts = originalParts->next;
+            }
         }
     }
 }
 
-static bool containsDash(const char* str, size_t strLength) {
-    for (size_t i = 0; i < strLength; i++) {
-        if (str[i] == '-') {
-            return true;
+void processor_clean() {
+    free(masterPartsInfo->masterParts);
+    free(masterPartsInfo->masterPartsNoHyphens);
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
+        if (masterPartsInfo->suffixesByLength[length]) {
+            htable_string_free(masterPartsInfo->suffixesByLength[length]);
+        }
+        if (masterPartsInfo->suffixesByNoHyphensLength[length]) {
+            htable_string_free(masterPartsInfo->suffixesByNoHyphensLength[length]);
         }
     }
-    return false;
-}
-
-static MasterPart* build_masterPartsNyHyphen(const MasterPart* masterParts, size_t masterPartsCount, size_t* outCount) {
-    MasterPart* masterPartsNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsNoHyphens));
-    CHECK_ALLOC(masterPartsNoHyphens);
-    size_t count = 0;
-    for (size_t i = 0; i < masterPartsCount; i++) {
-        if (containsDash(masterParts[i].partNumber, masterParts[i].partNumberLength)) {
-            masterPartsNoHyphens[count++] = masterParts[i];
-        }
-        //if (strchr(masterParts[i].partNumber, '-')) {
-        //	masterPartsNoHyphens[count++] = masterParts[i];
-        //}
+    free(masterPartsInfo);
+    for (size_t i = 0; i < partsInfo->partsCount; i++) {
+        char* partNumber = (char*)partsInfo->parts[i].partNumber;
+        free(partNumber);
     }
-    qsort(masterPartsNoHyphens, count, sizeof(*masterPartsNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
-    *outCount = count;
-    return masterPartsNoHyphens;
+    free(partsInfo->parts);
+    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
+        if (partsInfo->suffixesByLength[length]) {
+            htable_sizelist_free(partsInfo->suffixesByLength[length]);
+        }
+    }
+    free(partsInfo);
+    htable_string_free(dictionary);
 }
 
 static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size_t inputArrayCount) {
+    // Build masterParts
     size_t masterPartsCount = inputArrayCount;
     MasterPart* masterParts = malloc(masterPartsCount * sizeof(*masterParts));
     CHECK_ALLOC(masterParts);
     memcpy(masterParts, inputArray, masterPartsCount * sizeof(*masterParts));
     qsort(masterParts, masterPartsCount, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
-    size_t masterPartsNoHyphensCount = 0;
-    MasterPart* masterPartsNoHyphens = build_masterPartsNyHyphen(masterParts, masterPartsCount, &masterPartsNoHyphensCount);
 
+    // Build masterPartsNoHyphens
+    MasterPart* masterPartsNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsNoHyphens));
+    CHECK_ALLOC(masterPartsNoHyphens);
+    size_t masterPartsNoHyphensCount = 0;
+    for (size_t i = 0; i < masterPartsCount; i++) {
+        if (str_contains_dash(masterParts[i].partNumber, masterParts[i].partNumberLength)) {
+            masterPartsNoHyphens[masterPartsNoHyphensCount++] = masterParts[i];
+        }
+    }
+    qsort(masterPartsNoHyphens, masterPartsNoHyphensCount, sizeof(*masterPartsNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
+
+    // Create MasterPartsInfo
     MasterPartsInfo* mpInfo = malloc(sizeof(*mpInfo));
     CHECK_ALLOC(mpInfo);
     mpInfo->masterParts = masterParts;
@@ -149,15 +204,15 @@ static MasterPartsInfo* build_masterPartsInfo(const MasterPart* inputArray, size
 }
 
 static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size_t minLength) {
+    // Build parts
     Part* parts = malloc(inputSize * sizeof(*parts));
     CHECK_ALLOC(parts);
-
     size_t partsCount = 0;
     for (size_t i = 0; i < inputSize; i++) {
         const char* src = inputArray[i].partNumber;
         char buffer[MAX_STRING_LENGTH];
         size_t bufferLength;
-        to_upper_trim(src, buffer, sizeof(buffer), &bufferLength);
+        str_to_upper_trim(src, buffer, sizeof(buffer), &bufferLength);
 
         if (bufferLength >= minLength) {
             parts[partsCount].partNumberLength = bufferLength;
@@ -168,6 +223,7 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
     }
     qsort(parts, partsCount, sizeof(*parts), compare_part_by_partNumber_length_asc);
 
+    // Create PartsInfo
     PartsInfo* partsInfo = malloc(sizeof(*partsInfo));
     CHECK_ALLOC(partsInfo);
     partsInfo->parts = parts;
@@ -209,81 +265,32 @@ static PartsInfo* build_partsInfo(const Part* inputArray, size_t inputSize, size
     return partsInfo;
 }
 
-void processor_initialize(const SourceData* data) {
-    masterPartsInfo = build_masterPartsInfo(data->masterParts, data->masterPartsCount);
-    partsInfo = build_partsInfo(data->parts, data->partsCount, MIN_STRING_LENGTH);
-
-    dictionary = htable_string_create(partsInfo->partsCount);
-
-    for (size_t i = 0; i < partsInfo->partsCount; i++) {
-        Part part = partsInfo->parts[i];
-
-        HTableString* masterPartsBySuffix = masterPartsInfo->suffixesByLength[part.partNumberLength];
-        if (masterPartsBySuffix) {
-            const char* match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
-            if (match) {
-                htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
-            }
+static void backward_fill(size_t* array) {
+    size_t tmp = array[MAX_STRING_LENGTH - 1];
+    for (long length = (long)MAX_STRING_LENGTH - 1; length >= 0; length--) {
+        if (array[length] == MAX_VALUE) {
+            array[length] = tmp;
         }
-        masterPartsBySuffix = masterPartsInfo->suffixesByNoHyphensLength[part.partNumberLength];
-        if (masterPartsBySuffix) {
-            const char* match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
-            if (match) {
-                htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
-            }
-        }
-    }
-
-    for (long i = (long)masterPartsInfo->masterPartsCount - 1; i >= 0; i--) {
-        MasterPart mp = masterPartsInfo->masterParts[i];
-        HTableSizeList* partsBySuffix = partsInfo->suffixesByLength[mp.partNumberLength];
-        if (partsBySuffix) {
-            const ListItem* originalParts = htable_sizelist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
-            while (originalParts) {
-                size_t originalPartIndex = originalParts->value;
-                Part part = partsInfo->parts[originalPartIndex];
-                htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, mp.partNumber);
-                originalParts = originalParts->next;
-            }
+        else {
+            tmp = array[length];
         }
     }
 }
 
-const char* processor_find_match(const char* partNumber) {
-
-    char buffer[MAX_STRING_LENGTH];
-    size_t bufferLength;
-    to_upper_trim(partNumber, buffer, sizeof(buffer), &bufferLength);
-    if (bufferLength < MIN_STRING_LENGTH) {
-        return NULL;
-    }
-
-    const char* match = htable_string_search(dictionary, buffer, bufferLength);
-    return match;
+static int compare_mp_by_partNumber_length_asc(const void* a, const void* b) {
+    size_t lenA = ((const MasterPart*)a)->partNumberLength;
+    size_t lenB = ((const MasterPart*)b)->partNumberLength;
+    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
-void processor_clean() {
-    free(masterPartsInfo->masterParts);
-    free(masterPartsInfo->masterPartsNoHyphens);
-    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
-        if (masterPartsInfo->suffixesByLength[length]) {
-            htable_string_free(masterPartsInfo->suffixesByLength[length]);
-        }
-        if (masterPartsInfo->suffixesByNoHyphensLength[length]) {
-            htable_string_free(masterPartsInfo->suffixesByNoHyphensLength[length]);
-        }
-    }
-    free(masterPartsInfo);
-    for (size_t i = 0; i < partsInfo->partsCount; i++) {
-        char* partNumber = (char*)partsInfo->parts[i].partNumber;
-        free(partNumber);
-    }
-    free(partsInfo->parts);
-    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
-        if (partsInfo->suffixesByLength[length]) {
-            htable_sizelist_free(partsInfo->suffixesByLength[length]);
-        }
-    }
-    free(partsInfo);
-    htable_string_free(dictionary);
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b) {
+    size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
+    size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
+    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+}
+
+static int compare_part_by_partNumber_length_asc(const void* a, const void* b) {
+    size_t lenA = ((const Part*)a)->partNumberLength;
+    size_t lenB = ((const Part*)b)->partNumberLength;
+    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }

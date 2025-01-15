@@ -2,7 +2,7 @@
 #define HASH_TABLE_H
 
 // #########################################################
-// Hash table storing a string as value.
+// Hash table storing a string.
 typedef struct EntryString {
     const char* key;
     const char* value;
@@ -24,7 +24,7 @@ void htable_string_insert_if_not_exists(HTableString* table, const char* key, si
 void htable_string_free(HTableString* table);
 
 // #########################################################
-// Hash table storing a linked list of size_t as value.
+// Hash table storing a linked list of size_t.
 typedef struct ListItem {
     size_t value;
     struct ListItem* next;

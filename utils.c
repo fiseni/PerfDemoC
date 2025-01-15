@@ -1,43 +1,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include <limits.h>
 #include <ctype.h>
 #include <immintrin.h>
+#include <sys/stat.h>
 #include "utils.h"
 
-void to_upper_trim(const char* src, char* buffer, size_t bufferSize, size_t* outBufferLength) {
-    if (src == NULL || buffer == NULL || bufferSize == 0) {
-        *outBufferLength = 0;
-        return;
-    }
-    size_t len = strlen(src);
-    size_t j = 0;
-    for (size_t i = 0; i < len && j < bufferSize - 1; i++) {
-        if (!isspace((unsigned char)src[i])) {
-            buffer[j++] = (char)toupper((unsigned char)src[i]);
+bool str_contains_dash(const char* str, size_t strLength) {
+    assert(str);
+    for (size_t i = 0; i < strLength; i++) {
+        if (str[i] == '-') {
+            return true;
         }
     }
-    buffer[j] = '\0';
-    *outBufferLength = j;
+    return false;
 }
 
-void remove_char(const char* src, size_t srcLength, char* buffer, size_t bufferSize, char find, size_t* outBufferLength) {
-    if (src == NULL || buffer == NULL || bufferSize == 0) {
-        *outBufferLength = 0;
-        return;
-    }
-    size_t j = 0;
-    for (size_t i = 0; i < srcLength && j < bufferSize - 1; i++) {
-        if (src[i] != find) {
-            buffer[j++] = (char)toupper((unsigned char)src[i]);
-        }
-    }
-    buffer[j] = '\0';
-    *outBufferLength = j;
-}
+bool str_equals_same_length_vectorized(const char* s1, const char* s2, size_t length) {
+    assert(s1);
+    assert(s2);
 
-static int strcmp_same_length_vectorized(const char* s1, const char* s2, size_t length) {
     size_t i = 0;
 
     // Process 32 bytes at a time using AVX2
@@ -56,7 +40,7 @@ static int strcmp_same_length_vectorized(const char* s1, const char* s2, size_t 
 
         // If mask is not all ones, there's a difference
         if (mask != 0xFFFFFFFF) {
-            return 1;
+            return false;
         }
     }
     */
@@ -71,21 +55,24 @@ static int strcmp_same_length_vectorized(const char* s1, const char* s2, size_t 
         int mask = _mm_movemask_epi8(cmp);
 
         if (mask != 0xFFFF) {
-            return 1;
+            return false;
         }
     }
 
     // Compare any remaining bytes
     for (; i < length; i++) {
         if (s1[i] != s2[i]) {
-            return 1;
+            return false;
         }
     }
 
-    return 0; // Strings are equal
+    return true;
 }
 
-bool is_suffix(const char* value, size_t valueLength, const char* source, size_t sourceLength) {
+bool str_is_suffix(const char* value, size_t valueLength, const char* source, size_t sourceLength) {
+    assert(value);
+    assert(source);
+
     if (valueLength > sourceLength) {
         return false;
     }
@@ -94,7 +81,10 @@ bool is_suffix(const char* value, size_t valueLength, const char* source, size_t
     return (memcmp(endOfSource, value, valueLength) == 0);
 }
 
-bool is_suffix_vectorized(const char* value, size_t valueLength, const char* source, size_t sourceLength) {
+bool str_is_suffix_vectorized(const char* value, size_t valueLength, const char* source, size_t sourceLength) {
+    assert(value);
+    assert(source);
+
     if (valueLength > sourceLength) {
         return false;
     }
@@ -102,12 +92,79 @@ bool is_suffix_vectorized(const char* value, size_t valueLength, const char* sou
 
     // For our use-case most of the time the strings are not equal.
     // It turns out checking the first char before vectorization improves the performance.
-    return (endOfSource[0] == value[0] && strcmp_same_length_vectorized(endOfSource, value, valueLength) == 0);
+    return (endOfSource[0] == value[0] && str_equals_same_length_vectorized(endOfSource, value, valueLength));
 }
 
-static int is_power_of_two(size_t n) {
+void str_to_upper_trim(const char* src, char* buffer, size_t bufferSize, size_t* outBufferLength) {
+    assert(src);
+    assert(buffer);
+    assert(outBufferLength);
+
+    if (bufferSize == 0) {
+        *outBufferLength = 0;
+        return;
+    }
+    size_t len = strlen(src);
+    size_t j = 0;
+    for (size_t i = 0; i < len && j < bufferSize - 1; i++) {
+        if (!isspace((unsigned char)src[i])) {
+            buffer[j++] = (char)toupper((unsigned char)src[i]);
+        }
+    }
+    buffer[j] = '\0';
+    *outBufferLength = j;
+}
+
+void str_to_upper_trim_in_place(char* src, size_t length, size_t* outLength) {
+    assert(src);
+    assert(outLength);
+
+    size_t start = 0;
+    while (start < length && isspace((unsigned char)src[start])) {
+        start++;
+    }
+
+    if (start == length) {
+        src[0] = '\0';
+        *outLength = 0;
+        return;
+    }
+
+    size_t end = length - 1;
+    while (end > start && isspace((unsigned char)src[end])) {
+        end--;
+    }
+
+    size_t j = 0;
+    for (size_t i = start; i <= end; i++) {
+        src[j++] = (char)toupper((unsigned char)src[i]);
+    }
+    src[j] = '\0';
+    *outLength = j;
+}
+
+void str_remove_char(const char* src, size_t srcLength, char* buffer, size_t bufferSize, char find, size_t* outBufferLength) {
+    assert(src);
+    assert(buffer);
+    assert(outBufferLength);
+
+    if (bufferSize == 0) {
+        *outBufferLength = 0;
+        return;
+    }
+    size_t j = 0;
+    for (size_t i = 0; i < srcLength && j < bufferSize - 1; i++) {
+        if (src[i] != find) {
+            buffer[j++] = (char)toupper((unsigned char)src[i]);
+        }
+    }
+    buffer[j] = '\0';
+    *outBufferLength = j;
+}
+
+bool is_power_of_two(size_t n) {
     if (n == 0)
-        return 0;
+        return false;
     return (n & (n - 1)) == 0;
 }
 
@@ -134,4 +191,15 @@ size_t next_power_of_two(size_t n) {
     if (n == 0)
         return 0;
     return n;
+}
+
+size_t get_file_size_bytes(const char* filename) {
+    assert(filename);
+
+    struct stat st;
+    if (stat(filename, &st) != 0) {
+        perror("stat failed");
+        return -1;
+    }
+    return st.st_size;
 }

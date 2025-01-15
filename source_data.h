@@ -27,13 +27,7 @@ typedef struct SourceData {
     size_t partsCount;
 } SourceData;
 
-const SourceData* data_build(char** masterPartNumbers, size_t masterPartNumbersCount, char** partNumbers, size_t partNumbersCount);
-const SourceData* data_read(int argc, char* argv[]);
-void data_print(const SourceData* data);
-
-int compare_mp_by_partNumber_length_asc(const void* a, const void* b);
-int compare_mp_by_partNumber_length_desc(const void* a, const void* b);
-int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b);
-int compare_part_by_partNumber_length_asc(const void* a, const void* b);
+const SourceData* source_data_read(const char* masterPartsFilename, const char* partsFilename);
+void source_data_clean(SourceData* data);
 
 #endif

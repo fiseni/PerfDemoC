@@ -12,15 +12,21 @@ typedef struct Args {
     int isTestRun;
 } Args;
 
-static size_t run_main_loop(const SourceData* data) {
+static void run(const SourceData* data) {
+    double start = time_get_seconds();
+    processor_initialize(data);
+    printf("Processor initialization: \t%f seconds.\n", time_get_seconds() - start);
 
+    double start2 = time_get_seconds();
     size_t matchCount = 0;
     for (size_t i = 0; i < data->partsCount; i++) {
         if (processor_find_match(data->parts[i].partNumber)) {
             matchCount++;
         }
     };
-    return matchCount;
+
+    printf("Processor matching: \t\t%f seconds. Found %zu matches.\n", time_get_seconds() - start2, matchCount);
+    processor_clean();
 }
 
 static Args parse_arguments(int argc, char* argv[]) {
@@ -42,7 +48,6 @@ static Args parse_arguments(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
     Args args = parse_arguments(argc, argv);
-
     printf("\nImplementation: %s\n\n", processor_get_identifier());
 
     if (args.isTestRun) {
@@ -57,17 +62,10 @@ int main(int argc, char* argv[]) {
     printf("Reading source data: \t\t%f seconds.\n", time_get_seconds() - start);
 
     double start2 = time_get_seconds();
-    processor_initialize(data);
-    printf("Processor initialization: \t%f seconds.\n", time_get_seconds() - start2);
-
-    double start3 = time_get_seconds();
-    size_t matchCount = run_main_loop(data);
-    printf("Processor matching: \t\t%f seconds. Found %zu matches.\n", time_get_seconds() - start3, matchCount);
-
-    // We don't really need to clean anything here, the app is terminating.
-    //processor_clean();
-    //source_data_clean(data);
+    run(data);
     printf("Processor wall time: \t\t%f seconds.\n", time_get_seconds() - start2);
+
+    source_data_clean(data);
     printf("Wall time: \t\t\t%f seconds.\n\n", time_get_seconds() - start);
     return 0;
 }

@@ -193,7 +193,7 @@ size_t next_power_of_two(size_t n) {
     return n;
 }
 
-size_t get_file_size_bytes(const char* filename) {
+long get_file_size_bytes(const char* filename) {
     assert(filename);
 
     struct stat st;

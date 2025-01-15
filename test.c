@@ -93,8 +93,6 @@ void run_tests() {
     };
 
     printf("All tests passed!\n\n");
-    remove(masterPartFile);
-    remove(partsFile);
 }
 
 // We're exporting to a file to mimic the entire process.

@@ -9,7 +9,7 @@
 
 static Part* build_parts(const char* partsPath, size_t* outCount);
 static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCount);
-static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t length);
+static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t partNumberLength, char* block, size_t blockSize, size_t* blockIndexNoHyphens);
 
 const SourceData* source_data_read(const char* masterPartsPath, const char* partsPath) {
     size_t masterPartsCount = 0;
@@ -38,21 +38,21 @@ void source_data_clean(SourceData* data) {
 }
 
 static Part* build_parts(const char* partsPath, size_t* outCount) {
-    size_t fileSize = get_file_size_bytes(partsPath);
+    long fileSize = get_file_size_bytes(partsPath);
     FILE* file = fopen(partsPath, "r");
-    if (!file) {
+    if (!file || fileSize == -1) {
         fprintf(stderr, "Failed to open parts file: %s\n", partsPath);
         exit(EXIT_FAILURE);
     }
 
+    size_t blockIndex = 0;
     size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize;
     char* block = malloc(blockSize);
     CHECK_ALLOC(block);
 
-    size_t blockIndex = 0;
     size_t lineCount = 0;
     size_t bytes_read;
-    size_t bufferSize = 16000 < fileSize ? 16000 : fileSize;
+    size_t bufferSize = 65536 < fileSize ? 65536 : fileSize;
 
     char* buffer = &block[blockIndex];
     while ((bytes_read = fread(buffer, 1, bufferSize, file)) > 0) {
@@ -73,6 +73,8 @@ static Part* build_parts(const char* partsPath, size_t* outCount) {
     // Handle the case where the last line might not end with a newline
     if (blockIndex > 0 && block[blockIndex - 1] != '\n') {
         lineCount++;
+        block[blockIndex] = '\n';
+        blockIndex++;
     }
 
     Part* parts = malloc(lineCount * sizeof(*parts));
@@ -103,21 +105,21 @@ static Part* build_parts(const char* partsPath, size_t* outCount) {
 }
 
 static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCount) {
-    size_t fileSize = get_file_size_bytes(masterPartsPath);
+    long fileSize = get_file_size_bytes(masterPartsPath);
     FILE* file = fopen(masterPartsPath, "r");
-    if (!file) {
+    if (!file || fileSize == -1) {
         fprintf(stderr, "Failed to open file: %s\n", masterPartsPath);
         exit(EXIT_FAILURE);
     }
 
-    size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize;
+    size_t blockIndex = 0;
+    size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize * 2;
     char* block = malloc(blockSize);
     CHECK_ALLOC(block);
 
-    size_t blockIndex = 0;
     size_t lineCount = 0;
     size_t bytes_read;
-    size_t bufferSize = 16000 < fileSize ? 16000 : fileSize;
+    size_t bufferSize = 65536 < fileSize ? 65536 : fileSize;
 
     char* buffer = &block[blockIndex];
     while ((bytes_read = fread(buffer, 1, bufferSize, file)) > 0) {
@@ -138,6 +140,8 @@ static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCou
     // Handle the case where the last line might not end with a newline
     if (blockIndex > 0 && block[blockIndex - 1] != '\n') {
         lineCount++;
+        block[blockIndex] = '\n';
+        blockIndex++;
     }
 
     MasterPart* masterParts = malloc(lineCount * sizeof(*masterParts));
@@ -145,11 +149,12 @@ static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCou
 
     size_t stringStartIndex = 0;
     size_t masterPartsIndex = 0;
+    size_t blockIndexNoHyphens = blockIndex;
     for (size_t i = 0; i < blockIndex; i++) {
         if (block[i] == '\n') {
             block[i] = '\0';
             size_t length = i - stringStartIndex;
-            if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length)) {
+            if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length, block, blockSize, &blockIndexNoHyphens)) {
                 masterPartsIndex++;
             }
             stringStartIndex = i + 1;
@@ -159,7 +164,7 @@ static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCou
     // Handle the last line if it doesn't end with a newline
     if (stringStartIndex < blockIndex) {
         size_t length = blockIndex - stringStartIndex;
-        if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length)) {
+        if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length, block, blockSize, &blockIndexNoHyphens)) {
             masterPartsIndex++;
         }
     }
@@ -169,22 +174,33 @@ static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCou
     return masterParts;
 }
 
-static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t length) {
-    if (length < MIN_STRING_LENGTH) {
+static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t partNumberLength, char* block, size_t blockSize, size_t* blockIndexNoHyphens) {
+    if (partNumberLength < MIN_STRING_LENGTH) {
         return false;
     }
-    size_t partNumberLength;
-    str_to_upper_trim_in_place(partNumber, length, &partNumberLength);
+
+    str_to_upper_trim_in_place(partNumber, partNumberLength, &partNumberLength);
+    if (partNumberLength < MIN_STRING_LENGTH) {
+        return false;
+    }
 
     masterPart->partNumber = partNumber;
     masterPart->partNumberLength = partNumberLength;
 
     if (str_contains_dash(partNumber, partNumberLength)) {
-        char* partNumberNoHyphens = malloc(partNumberLength);
+        // Ensure there is enough space in the block for partNumberNoHyphens
+        if (*blockIndexNoHyphens + partNumberLength + 1 > blockSize) { // +1 for null terminator
+            fprintf(stderr, "Block overflow detected while allocating partNumberNoHyphens.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        char* partNumberNoHyphens = &block[*blockIndexNoHyphens];
         size_t partNumberNoHyphensLength;
         str_remove_char(partNumber, partNumberLength, partNumberNoHyphens, partNumberLength, '-', &partNumberNoHyphensLength);
         masterPart->partNumberNoHyphens = partNumberNoHyphens;
         masterPart->partNumberNoHyphensLength = partNumberNoHyphensLength;
+
+        *blockIndexNoHyphens += partNumberNoHyphensLength + 1; // +1 for null terminator
     }
     else {
         masterPart->partNumberNoHyphens = partNumber;

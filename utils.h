@@ -27,5 +27,5 @@ void str_remove_char(const char* src, size_t srcLength, char* buffer, size_t buf
 
 bool is_power_of_two(size_t n);
 size_t next_power_of_two(size_t n);
-size_t get_file_size_bytes(const char* filename);
+long get_file_size_bytes(const char* filename);
 #endif

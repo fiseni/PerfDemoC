@@ -69,11 +69,14 @@ void processor_initialize(const SourceData* data) {
 }
 
 void processor_clean() {
+    if (masterPartsAsc) {
+        free(masterPartsAsc);
+        masterPartsAsc = NULL;
+    }
     if (masterPartsAscByNoHyphens) {
         free(masterPartsAscByNoHyphens);
         masterPartsAscByNoHyphens = NULL;
     }
-
     if (masterPartsDesc) {
         free(masterPartsDesc);
         masterPartsDesc = NULL;

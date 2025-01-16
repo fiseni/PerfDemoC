@@ -111,12 +111,14 @@ static void export_test_data(const char* masterPartsFile, const char* partFile) 
         perror("Failed to open files");
         return;
     }
+
+    // The original files had CRLF line endings.
     for (size_t i = 0; i < testMasterPartNumbersCount; i++) {
-        fprintf(file1, "%s\n", testMasterPartNumbers[i]);
+        fprintf(file1, "%s\r\n", testMasterPartNumbers[i]);
     }
     fclose(file1);
     for (size_t i = 0; i < testPartsCount; i++) {
-        fprintf(file2, "%s\n", testPartNumbers[i]);
+        fprintf(file2, "%s\r\n", testPartNumbers[i]);
     }
     fclose(file2);
 }

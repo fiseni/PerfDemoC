@@ -15,7 +15,7 @@ static size_t hash(const HTableString* table, const char* key, size_t keyLength)
     return hash & (table->size - 1);
 }
 
-static bool is_equal(const char* str1, const char* str2, size_t str2Length) {
+static bool str_equals(const char* str1, const char* str2, size_t str2Length) {
     for (size_t i = 0; i < str2Length; i++) {
         if (str1[i] == '\0' || str1[i] != str2[i]) {
             return false;
@@ -38,10 +38,10 @@ HTableString* htable_string_create(size_t size) {
     for (size_t i = 0; i < tableSize; i++) {
         table->buckets[i] = NULL;
     }
-    table->block = malloc(sizeof(*table->block) * size);
-    CHECK_ALLOC(table->block);
-    table->blockCount = size;
     table->blockIndex = 0;
+    table->blockCount = size;
+    table->block = malloc(sizeof(*table->block) * table->blockCount);
+    CHECK_ALLOC(table->block);
     return table;
 }
 
@@ -51,7 +51,7 @@ static const char* search_internal(const HTableString* table, const char* key, s
     while (entry) {
         //if (strcmp(entry->key, key) == 0) {
         //if (strncmp(entry->key, key, keyLength) == 0) {
-        if (is_equal(entry->key, key, keyLength)) {
+        if (str_equals(entry->key, key, keyLength)) {
             return entry->value;
         }
         entry = entry->next;
@@ -71,43 +71,18 @@ void htable_string_insert_if_not_exists(HTableString* table, const char* key, si
         return;
     }
 
-    EntryString* new_entry;
-    if (table->blockIndex < table->blockCount) {
-        new_entry = &table->block[table->blockIndex++];
-        new_entry->isAllocatedFromBlock = 1;
-    }
-    else {
-        new_entry = malloc(sizeof(*new_entry));
-        CHECK_ALLOC(new_entry);
-        new_entry->isAllocatedFromBlock = 0;
-    }
+    // In our scenario, we'll never add more items than the initially size passed during table creation.
+    // So, we're sure that we won't run out of space. No need to malloc again.
+    assert(table->blockIndex < table->blockCount);
 
+    EntryString* new_entry = &table->block[table->blockIndex++];
     new_entry->key = key;
     new_entry->value = value;
     new_entry->next = table->buckets[index];
     table->buckets[index] = new_entry;
 }
 
-static void free_entries(HTableString* table) {
-    for (size_t i = 0; i < table->size; i++) {
-        EntryString* entry = table->buckets[i];
-        while (entry) {
-            if (entry->isAllocatedFromBlock == 0) {
-                EntryString* temp = entry;
-                entry = entry->next;
-                free(temp);
-            }
-            else {
-                entry = entry->next;
-            }
-        }
-    }
-}
-
 void htable_string_free(HTableString* table) {
-    // We're providing the appropriate size for the tables everywhere
-    // and malloc for individual entries will never occur.
-    // free_entries(table);
     free(table->block);
     free(table->buckets);
     free(table);

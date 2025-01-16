@@ -7,7 +7,6 @@ typedef struct EntryString {
     const char* key;
     const char* value;
     struct EntryString* next;
-    int isAllocatedFromBlock;
 } EntryString;
 
 typedef struct HTableString {
@@ -39,6 +38,9 @@ typedef struct EntrySizeList {
 typedef struct HTableSizeList {
     EntrySizeList** buckets;
     size_t size;
+    EntrySizeList* blockEntry;
+    size_t blockEntryCount;
+    size_t blockEntryIndex;
     ListItem* block;
     size_t blockCount;
     size_t blockIndex;

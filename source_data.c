@@ -27,7 +27,7 @@ const SourceData* source_data_read(const char* masterPartsPath, const char* part
     return data;
 }
 
-void source_data_clean(SourceData* data) {
+void source_data_clean(const SourceData* data) {
     // All strings are allocated from a single block
     free((void*)data->masterParts->partNumber);
     free((void*)data->parts->partNumber);

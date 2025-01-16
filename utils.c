@@ -18,6 +18,15 @@ bool str_contains_dash(const char* str, size_t strLength) {
     return false;
 }
 
+bool str_equals_same_length(const char* s1, const char* s2, size_t length) {
+    for (size_t i = 0; i < length; i++) {
+        if (s1[i] != s2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool str_equals_same_length_vectorized(const char* s1, const char* s2, size_t length) {
     assert(s1);
     assert(s2);

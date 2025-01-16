@@ -18,6 +18,7 @@
 #include <stdbool.h>
 
 bool str_contains_dash(const char* str, size_t strLength);
+bool str_equals_same_length(const char* s1, const char* s2, size_t length);
 bool str_equals_same_length_vectorized(const char* s1, const char* s2, size_t length);
 bool str_is_suffix(const char* value, size_t valueLength, const char* source, size_t sourceLength);
 bool str_is_suffix_vectorized(const char* value, size_t valueLength, const char* source, size_t sourceLength);

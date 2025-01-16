@@ -15,30 +15,6 @@ static size_t hash(const HTableSizeList* table, const char* key, size_t keyLengt
     return hash & (table->size - 1);
 }
 
-static bool is_equal(const char* str1, const char* str2, size_t str2Length) {
-    for (size_t i = 0; i < str2Length; i++) {
-        if (str1[i] == '\0' || str1[i] != str2[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-static void linked_list_add(HTableSizeList* table, EntrySizeList* entry, size_t value) {
-    ListItem* newItem;
-    if (table->blockIndex < table->blockCount) {
-        newItem = &table->block[table->blockIndex++];
-    }
-    else {
-        newItem = malloc(sizeof(*newItem));
-        CHECK_ALLOC(newItem);
-    }
-
-    newItem->value = value;
-    newItem->next = entry->list;
-    entry->list = newItem;
-}
-
 HTableSizeList* htable_sizelist_create(size_t size) {
     size_t tableSize = next_power_of_two(size);
     if (tableSize == 0) {
@@ -53,10 +29,14 @@ HTableSizeList* htable_sizelist_create(size_t size) {
     for (size_t i = 0; i < tableSize; i++) {
         table->buckets[i] = NULL;
     }
-    table->block = malloc(sizeof(*table->block) * size);
-    CHECK_ALLOC(table->block);
-    table->blockCount = size;
+    table->blockEntryIndex = 0;
+    table->blockEntryCount = size;
+    table->blockEntry = malloc(sizeof(*table->blockEntry) * table->blockEntryCount);
+    CHECK_ALLOC(table->blockEntry);
     table->blockIndex = 0;
+    table->blockCount = size;
+    table->block = malloc(sizeof(*table->block) * table->blockCount);
+    CHECK_ALLOC(table->block);
     return table;
 }
 
@@ -64,7 +44,7 @@ const ListItem* htable_sizelist_search(const HTableSizeList* table, const char* 
     size_t index = hash(table, key, keyLength);
     EntrySizeList* entry = table->buckets[index];
     while (entry) {
-        if (is_equal(entry->key, key, keyLength)) {
+        if (str_equals_same_length(entry->key, key, keyLength)) {
             return entry->list;
         }
         entry = entry->next;
@@ -72,21 +52,35 @@ const ListItem* htable_sizelist_search(const HTableSizeList* table, const char* 
     return NULL;
 }
 
+static void linked_list_add(HTableSizeList* table, EntrySizeList* entry, size_t value) {
+    // In our scenario, we'll never add more items than the initially size passed during table creation.
+    // So, we're sure that we won't run out of space. No need to malloc again.
+    assert(table->blockIndex < table->blockCount);
+
+    ListItem* newItem = &table->block[table->blockIndex++];
+    newItem->value = value;
+    newItem->next = entry->list;
+    entry->list = newItem;
+}
+
 void htable_sizelist_add(HTableSizeList* table, const char* key, size_t keyLength, size_t value) {
     size_t index = hash(table, key, keyLength);
     EntrySizeList* entry = table->buckets[index];
 
     while (entry) {
-        if (is_equal(entry->key, key, keyLength)) {
+        // We know this table is always used with same key length.
+        if (str_equals_same_length(entry->key, key, keyLength)) {
             linked_list_add(table, entry, value);
             return;
         }
         entry = entry->next;
     }
 
-    // Key not found, create new entry
-    EntrySizeList* newEntry = malloc(sizeof(*newEntry));
-    CHECK_ALLOC(newEntry);
+    // In our scenario, we'll never add more items than the initially size passed during table creation.
+    // So, we're sure that we won't run out of space. No need to malloc again.
+    assert(table->blockEntryIndex < table->blockEntryCount);
+
+    EntrySizeList* newEntry = &table->blockEntry[table->blockEntryIndex++];
     newEntry->key = key;
     newEntry->list = NULL;
     linked_list_add(table, newEntry, value);
@@ -95,14 +89,7 @@ void htable_sizelist_add(HTableSizeList* table, const char* key, size_t keyLengt
 }
 
 void htable_sizelist_free(HTableSizeList* table) {
-    for (size_t i = 0; i < table->size; i++) {
-        EntrySizeList* entry = table->buckets[i];
-        while (entry) {
-            EntrySizeList* temp = entry;
-            entry = entry->next;
-            free(temp);
-        }
-    }
+    free(table->blockEntry);
     free(table->block);
     free(table->buckets);
     free(table);

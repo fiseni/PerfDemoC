@@ -28,6 +28,6 @@ typedef struct SourceData {
 } SourceData;
 
 const SourceData* source_data_read(const char* masterPartsFilename, const char* partsFilename);
-void source_data_clean(SourceData* data);
+void source_data_clean(const SourceData* data);
 
 #endif

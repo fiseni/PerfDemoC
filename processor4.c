@@ -2,16 +2,12 @@
 #include <string.h>
 #include <assert.h>
 #include "utils.h"
+#include "thread_utils.h"
 #include "hash_table.h"
 #include "cross_platform_time.h"
 #include "processor.h"
 
 const char* processor_get_identifier() { return "Processor4"; }
-
-static int compare_mp_by_partNumber_length_asc(const void* a, const void* b);
-static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b);
-static int compare_part_by_partNumber_length_asc(const void* a, const void* b);
-static void backward_fill(size_t* array);
 
 typedef struct PartsInfo {
     Part* parts;
@@ -26,7 +22,24 @@ typedef struct MasterPartsInfo {
     size_t masterPartsNoHyphensCount;
     HTableString* suffixesByLength[MAX_STRING_LENGTH];
     HTableString* suffixesByNoHyphensLength[MAX_STRING_LENGTH];
-} MasterPartsInfo;;
+} MasterPartsInfo;
+
+typedef struct ThreadArgs {
+    void* info;
+    size_t startIndex;
+    size_t suffixLength;
+} ThreadArgs;
+
+static MasterPartsInfo build_masterPartsInfo(const MasterPart* inputArray, size_t inputArrayCount);
+static PartsInfo build_partsInfo(const Part* inputArray, size_t inputSize, size_t minLength);
+static thread_ret_t create_suffix_table_for_mp_PartNumber(thread_arg_t arg);
+static thread_ret_t create_suffix_table_for_mp_PartNumberNoHyphens(thread_arg_t arg);
+static thread_ret_t create_suffix_table_for_part_PartNumber(thread_arg_t arg);
+static void free_info_allocations(MasterPartsInfo masterPartsInfo, PartsInfo partsInfo);
+static int compare_mp_by_partNumber_length_asc(const void* a, const void* b);
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b);
+static int compare_part_by_partNumber_length_asc(const void* a, const void* b);
+static void backward_fill(size_t* array);
 
 static const size_t MAX_VALUE = ((size_t)-1);
 static char* block = NULL;
@@ -45,9 +58,7 @@ const char* processor_find_match(const char* partNumber) {
     return match;
 }
 
-static MasterPartsInfo build_masterPartsInfo(const MasterPart* inputArray, size_t inputArrayCount);
-static PartsInfo build_partsInfo(const Part* inputArray, size_t inputSize, size_t minLength);
-static void free_info_allocations(MasterPartsInfo masterPartsInfo, PartsInfo partsInfo);
+
 
 void processor_initialize(const SourceData* data) {
     MasterPartsInfo masterPartsInfo = build_masterPartsInfo(data->masterParts, data->masterPartsCount);
@@ -167,43 +178,79 @@ static MasterPartsInfo build_masterPartsInfo(const MasterPart* inputArray, size_
     backward_fill(startIndexByLength);
     backward_fill(startIndexByLengthNoHyphens);
 
-    // Create hash tables
-    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
-        mpInfo.suffixesByLength[length] = NULL;
-        mpInfo.suffixesByNoHyphensLength[length] = NULL;
+    thread_t threads[MAX_STRING_LENGTH] = { 0 };
+    ThreadArgs threadArgs[MAX_STRING_LENGTH] = { 0 };
+    int status;
+
+    // Create a thread for each suffixesByLength table
+    for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
+        threadArgs[length].info = &mpInfo;
+        threadArgs[length].suffixLength = length;
+        threadArgs[length].startIndex = startIndexByLength[length];
+        status = create_thread(&threads[length], create_suffix_table_for_mp_PartNumber, &threadArgs[length]);
+        CHECK_THREAD_CREATE_STATUS(status, length);
     }
     for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
-        HTableString* table = NULL;
-        size_t startIndex = startIndexByLength[length];
-        if (startIndex != MAX_VALUE) {
-            if (!table) {
-                table = htable_string_create(masterPartsCount);
-            }
-            for (size_t i = startIndex; i < masterPartsCount; i++) {
-                MasterPart mp = masterParts[i];
-                const char* suffix = mp.partNumber + (mp.partNumberLength - length);
-                htable_string_insert_if_not_exists(table, suffix, length, mp.partNumber);
-            }
-        }
-        mpInfo.suffixesByLength[length] = table;
+        status = join_thread(threads[length], NULL);
+        CHECK_THREAD_JOIN_STATUS(status, length);
+    }
+
+    // Create a thread for each suffixesByNoHyphensLength table
+    for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
+        threadArgs[length].info = &mpInfo;
+        threadArgs[length].suffixLength = length;
+        threadArgs[length].startIndex = startIndexByLengthNoHyphens[length];
+        status = create_thread(&threads[length], create_suffix_table_for_mp_PartNumberNoHyphens, &threadArgs[length]);
+        CHECK_THREAD_CREATE_STATUS(status, length);
     }
     for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
-        HTableString* table = NULL;
-        size_t startIndex = startIndexByLengthNoHyphens[length];
-        if (startIndex != MAX_VALUE) {
-            if (!table) {
-                table = htable_string_create(masterPartsNoHyphensCount);
-            }
-            for (size_t i = startIndex; i < masterPartsNoHyphensCount; i++) {
-                MasterPart mp = masterPartsNoHyphens[i];
-                const char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - length);
-                htable_string_insert_if_not_exists(table, suffix, length, mp.partNumber);
-            }
-        }
-        mpInfo.suffixesByNoHyphensLength[length] = table;
+        status = join_thread(threads[length], NULL);
+        CHECK_THREAD_JOIN_STATUS(status, length);
     }
 
     return mpInfo;
+}
+
+static thread_ret_t create_suffix_table_for_mp_PartNumber(thread_arg_t arg) {
+    ThreadArgs* args = (ThreadArgs*)arg;
+    MasterPartsInfo* mpInfo = args->info;
+    size_t startIndex = args->startIndex;
+    size_t suffixLength = args->suffixLength;
+
+    HTableString* table = NULL;
+    MasterPart* masterParts = mpInfo->masterParts;
+    size_t masterPartsCount = mpInfo->masterPartsCount;
+    if (startIndex != MAX_VALUE) {
+        table = htable_string_create(masterPartsCount);
+        for (size_t i = startIndex; i < masterPartsCount; i++) {
+            MasterPart mp = masterParts[i];
+            const char* suffix = mp.partNumber + (mp.partNumberLength - suffixLength);
+            htable_string_insert_if_not_exists(table, suffix, suffixLength, mp.partNumber);
+        }
+    }
+    mpInfo->suffixesByLength[suffixLength] = table;
+    return 0;
+}
+
+static thread_ret_t create_suffix_table_for_mp_PartNumberNoHyphens(thread_arg_t arg) {
+    ThreadArgs* args = (ThreadArgs*)arg;
+    MasterPartsInfo* mpInfo = args->info;
+    size_t startIndex = args->startIndex;
+    size_t suffixLength = args->suffixLength;
+
+    HTableString* table = NULL;
+    MasterPart* masterPartsNoHyphens = mpInfo->masterPartsNoHyphens;
+    size_t masterPartsNoHyphensCount = mpInfo->masterPartsNoHyphensCount;
+    if (startIndex != MAX_VALUE) {
+        table = htable_string_create(masterPartsNoHyphensCount);
+        for (size_t i = startIndex; i < masterPartsNoHyphensCount; i++) {
+            MasterPart mp = masterPartsNoHyphens[i];
+            const char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - suffixLength);
+            htable_string_insert_if_not_exists(table, suffix, suffixLength, mp.partNumber);
+        }
+    }
+    mpInfo->suffixesByNoHyphensLength[suffixLength] = table;
+    return 0;
 }
 
 static PartsInfo build_partsInfo(const Part* inputArray, size_t inputSize, size_t minLength) {
@@ -252,27 +299,45 @@ static PartsInfo build_partsInfo(const Part* inputArray, size_t inputSize, size_
     }
     backward_fill(startIndexByLength);
 
-    // Create hash tables
-    for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
-        partsInfo.suffixesByLength[length] = NULL;
+    thread_t threads[MAX_STRING_LENGTH] = { 0 };
+    ThreadArgs threadArgs[MAX_STRING_LENGTH] = { 0 };
+    int status;
+
+    // Create a thread for each suffixesByLength table
+    for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
+        threadArgs[length].info = &partsInfo;
+        threadArgs[length].suffixLength = length;
+        threadArgs[length].startIndex = startIndexByLength[length];
+        status = create_thread(&threads[length], create_suffix_table_for_part_PartNumber, &threadArgs[length]);
+        CHECK_THREAD_CREATE_STATUS(status, length);
     }
     for (size_t length = MIN_STRING_LENGTH; length < MAX_STRING_LENGTH; length++) {
-        HTableSizeList* table = NULL;
-        size_t startIndex = startIndexByLength[length];
-        if (startIndex != MAX_VALUE) {
-            if (!table) {
-                table = htable_sizelist_create(partsCount);
-            }
-            for (size_t i = startIndex; i < partsCount; i++) {
-                Part part = parts[i];
-                const char* suffix = part.partNumber + (part.partNumberLength - length);
-                htable_sizelist_add(table, suffix, length, i);
-            }
-        }
-        partsInfo.suffixesByLength[length] = table;
+        status = join_thread(threads[length], NULL);
+        CHECK_THREAD_JOIN_STATUS(status, length);
     }
 
     return partsInfo;
+}
+
+static thread_ret_t create_suffix_table_for_part_PartNumber(thread_arg_t arg) {
+    ThreadArgs* args = (ThreadArgs*)arg;
+    PartsInfo* partsInfo = args->info;
+    size_t startIndex = args->startIndex;
+    size_t suffixLength = args->suffixLength;
+
+    HTableSizeList* table = NULL;
+    Part* parts = partsInfo->parts;
+    size_t partsCount = partsInfo->partsCount;
+    if (startIndex != MAX_VALUE) {
+        table = htable_sizelist_create(partsCount);
+        for (size_t i = startIndex; i < partsCount; i++) {
+            Part part = parts[i];
+            const char* suffix = part.partNumber + (part.partNumberLength - suffixLength);
+            htable_sizelist_add(table, suffix, suffixLength, i);
+        }
+    }
+    partsInfo->suffixesByLength[suffixLength] = table;
+    return 0;
 }
 
 static void backward_fill(size_t* array) {

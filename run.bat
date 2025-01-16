@@ -16,7 +16,7 @@ if "%impl%"=="" (
 
 :: Compilation flags
 set "FLAGS=/permissive- /GS /GL /Gy /Gm- /W3 /WX- /O2 /Oi /sdl /Gd /MD /arch:AVX2 /EHsc /Zc:inline /fp:precise /Zc:forScope /nologo /D ""_CRT_SECURE_NO_WARNINGS"" /D ""_CONSOLE"""
-set "FILES=main.c utils.c cross_platform_time.c hash_table_string.c hash_table_sizelist.c source_data.c test.c processor%impl%.c"
+set "FILES=main.c utils.c cross_platform_time.c thread_utils.c hash_table_string.c hash_table_sizelist.c source_data.c test.c processor%impl%.c"
 
 if "%1"=="test" (
     cl %FLAGS% %FILES% /Fe:demo.exe

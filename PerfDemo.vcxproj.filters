@@ -45,6 +45,9 @@
     <ClCompile Include="hash_table_sizelist.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="thread_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="processor.h">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="test.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="thread_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -14,7 +14,7 @@ if [ "$impl" = "" ]; then
 fi
 
 FLAGS="-O3 -march=native -s -Wall -Wextra -Wno-unused-function"
-FILES="main.c utils.c cross_platform_time.c hash_table_string.c hash_table_sizelist.c source_data.c test.c processor$impl.c"
+FILES="main.c utils.c cross_platform_time.c thread_utils.c hash_table_string.c hash_table_sizelist.c source_data.c test.c processor$impl.c"
 
 if [ "$1" = "test" ]; then
   gcc $FLAGS $FILES -o demo && ./demo test $arg2

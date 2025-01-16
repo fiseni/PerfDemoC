@@ -130,6 +130,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="hash_table_sizelist.c" />
+    <ClCompile Include="thread_utils.c" />
     <ClCompile Include="utils.c" />
     <ClCompile Include="cross_platform_time.c" />
     <ClCompile Include="source_data.c" />
@@ -152,6 +153,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test.h" />
+    <ClInclude Include="thread_utils.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="cross_platform_time.h" />
     <ClInclude Include="source_data.h" />

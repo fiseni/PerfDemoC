@@ -7,6 +7,11 @@
 #include "utils.h"
 #include "hash_table.h"
 
+/* Fati Iseni
+* DO NOT use this implementation as a general purpose hash table.
+* It is tailored for our scenario and it is safe to use only within this context.
+*/
+
 static size_t hash(const HTableString* table, const char* key, size_t keyLength) {
     size_t hash = 0x811C9DC5; // 2166136261
     for (size_t i = 0; i < keyLength; i++) {
@@ -15,7 +20,7 @@ static size_t hash(const HTableString* table, const char* key, size_t keyLength)
     return hash & (table->size - 1);
 }
 
-static bool str_equals(const char* str1, const char* str2, size_t str2Length) {
+static bool str_equals_one_length(const char* str1, const char* str2, size_t str2Length) {
     for (size_t i = 0; i < str2Length; i++) {
         if (str1[i] == '\0' || str1[i] != str2[i]) {
             return false;
@@ -51,7 +56,7 @@ static const char* search_internal(const HTableString* table, const char* key, s
     while (entry) {
         //if (strcmp(entry->key, key) == 0) {
         //if (strncmp(entry->key, key, keyLength) == 0) {
-        if (str_equals(entry->key, key, keyLength)) {
+        if (str_equals_one_length(entry->key, key, keyLength)) {
             return entry->value;
         }
         entry = entry->next;

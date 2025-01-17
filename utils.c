@@ -8,8 +8,14 @@
 #include <sys/stat.h>
 #include "utils.h"
 
+/* Fati Iseni
+* DO NOT use these implementations for general purpose stuff.
+* They're tailored for our scenario and they're safe to use only within this context.
+*/
+
 bool str_contains_dash(const char* str, size_t strLength) {
     assert(str);
+
     for (size_t i = 0; i < strLength; i++) {
         if (str[i] == '-') {
             return true;
@@ -19,6 +25,9 @@ bool str_contains_dash(const char* str, size_t strLength) {
 }
 
 bool str_equals_same_length(const char* s1, const char* s2, size_t length) {
+    assert(s1);
+    assert(s2);
+
     for (size_t i = 0; i < length; i++) {
         if (s1[i] != s2[i]) {
             return false;
@@ -41,13 +50,9 @@ bool str_equals_same_length_vectorized(const char* s1, const char* s2, size_t le
         __m256i chunk1 = _mm256_loadu_si256((const __m256i*)(s1 + i));
         __m256i chunk2 = _mm256_loadu_si256((const __m256i*)(s2 + i));
 
-        // Compare the two chunks byte-wise
         __m256i cmp = _mm256_cmpeq_epi8(chunk1, chunk2);
-
-        // Create a mask from the comparison
         int mask = _mm256_movemask_epi8(cmp);
 
-        // If mask is not all ones, there's a difference
         if (mask != 0xFFFFFFFF) {
             return false;
         }
@@ -116,8 +121,9 @@ void str_to_upper_trim(const char* src, char* buffer, size_t bufferSize, size_t*
     size_t len = strlen(src);
     size_t j = 0;
     for (size_t i = 0; i < len && j < bufferSize - 1; i++) {
-        if (!isspace((unsigned char)src[i])) {
-            buffer[j++] = (char)toupper((unsigned char)src[i]);
+        // We know the chars are ASCII (no need to cast to unaligned char)
+        if (!isspace(src[i])) {
+            buffer[j++] = toupper(src[i]);
         }
     }
     buffer[j] = '\0';
@@ -128,8 +134,10 @@ void str_to_upper_trim_in_place(char* src, size_t length, size_t* outLength) {
     assert(src);
     assert(outLength);
 
+    // We know the chars are ASCII (no need to cast to unaligned char)
+
     size_t start = 0;
-    while (start < length && isspace((unsigned char)src[start])) {
+    while (start < length && isspace(src[start])) {
         start++;
     }
 
@@ -140,13 +148,13 @@ void str_to_upper_trim_in_place(char* src, size_t length, size_t* outLength) {
     }
 
     size_t end = length - 1;
-    while (end > start && isspace((unsigned char)src[end])) {
+    while (end > start && isspace(src[end])) {
         end--;
     }
 
     size_t j = 0;
     for (size_t i = start; i <= end; i++) {
-        src[j++] = (char)toupper((unsigned char)src[i]);
+        src[j++] = toupper(src[i]);
     }
     src[j] = '\0';
     *outLength = j;
@@ -164,7 +172,8 @@ void str_remove_char(const char* src, size_t srcLength, char* buffer, size_t buf
     size_t j = 0;
     for (size_t i = 0; i < srcLength && j < bufferSize - 1; i++) {
         if (src[i] != find) {
-            buffer[j++] = (char)toupper((unsigned char)src[i]);
+            // We know the chars are ASCII (no need to cast to unaligned char)
+            buffer[j++] = toupper(src[i]);
         }
     }
     buffer[j] = '\0';

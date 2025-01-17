@@ -7,6 +7,11 @@
 #include "utils.h"
 #include "hash_table.h"
 
+/* Fati Iseni
+* DO NOT use this implementation as a general purpose hash table.
+* It is tailored for our scenario and it is safe to use only within this context.
+*/
+
 static size_t hash(const HTableSizeList* table, const char* key, size_t keyLength) {
     size_t hash = 0x811C9DC5; // 2166136261
     for (size_t i = 0; i < keyLength; i++) {

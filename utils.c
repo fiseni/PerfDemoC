@@ -135,7 +135,7 @@ void str_to_upper_trim(const char *src, char *buffer, size_t bufferSize, size_t 
     }
 
     size_t j = 0;
-    for (size_t i = start; i <= end; i++) {
+    for (size_t i = start; i <= end && j < bufferSize - 1; i++) {
         buffer[j++] = toupper(src[i]);
     }
     buffer[j] = '\0';

@@ -113,18 +113,30 @@ void str_to_upper_trim(const char *src, char *buffer, size_t bufferSize, size_t 
     assert(src);
     assert(buffer);
     assert(outBufferLength);
+    assert(bufferSize > 0);
 
-    if (bufferSize == 0) {
+    // We know the chars are ASCII (no need to cast to unaligned char)
+
+    size_t srcLength = strlen(src);
+    size_t start = 0;
+    while (start < srcLength && isspace(src[start])) {
+        start++;
+    }
+
+    if (start == srcLength) {
+        buffer[0] = '\0';
         *outBufferLength = 0;
         return;
     }
-    size_t len = strlen(src);
+
+    size_t end = srcLength - 1;
+    while (end > start && isspace(src[end])) {
+        end--;
+    }
+
     size_t j = 0;
-    for (size_t i = 0; i < len && j < bufferSize - 1; i++) {
-        // We know the chars are ASCII (no need to cast to unaligned char)
-        if (!isspace(src[i])) {
-            buffer[j++] = toupper(src[i]);
-        }
+    for (size_t i = start; i <= end; i++) {
+        buffer[j++] = toupper(src[i]);
     }
     buffer[j] = '\0';
     *outBufferLength = j;

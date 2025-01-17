@@ -32,7 +32,7 @@ To run the tests.
 ./run.bat test 5
 ```
 
-## Challenge description
+## Challenge Description
 
 For a provided `SourceData` (shown below), we should find a match for each `Part` according to these rules:
 - If `Part.partNumber` is null or less than 3 characters (trimmed) return null.
@@ -64,7 +64,7 @@ typedef struct SourceData {
 } SourceData;
 ```
 
-### Constraints and assumptions
+### Constraints and Assumptions
 
 - Reading and preparing the source data is not in the scope of the benchmarks.
 - All strings contain only ASCII characters and are null-terminated.
@@ -94,6 +94,13 @@ static void run(const SourceData *data) {
 ```
 
 The original implementation is [processor1](https://github.com/fiseni/PerfDemoC/blob/main/processor1.c), and that's the logic we're trying to optimize.
+
+## Benchmark Results
+The original implementation written in C# completes the execution in 42 minutes (refer to this [repository](https://github.com/fiseni/PerfDemo) for more details). The C version [processor1.c](https://github.com/fiseni/PerfDemoC/blob/main/processor1.c) does not perform much better either.
+
+The optimized implementation completes in just ~0.21 seconds. That's more than 10,000 times faster.
+
+![Benchmark2](https://github.com/user-attachments/assets/8e30d3b3-5fa3-4628-b30c-0617f071962c)
 
 ## Contributions
 

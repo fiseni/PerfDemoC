@@ -71,8 +71,8 @@ typedef struct SourceData {
 - The `MasterPart.partNumber` in the source is already trimmed and uppercase.
 - The `MasterPart.partNumberNoHyphens` is the same string where '-' is stripped out if present.
 - The `Part.partNumber` is in raw form. It might contain leading/trailing spaces and an unknown case.
-- The `SourceData` should be considered as read-only. If you need any processing, sorting the arrays, processing `Part.partNumber`, and so on; it should be done in a separate copy of the data and it's part of the benchmark.
-- Once the matching completes, any allocated memory used during the process should be freed.
+- The `SourceData` should be considered as read-only. If you need any processing, sorting the arrays, processing `Part.partNumber`, and so on; it should be done in a separate copy and is part of the benchmark.
+- Once the matching completes, any allocated memory used during the process should be freed up.
 - This challenge is focused only on finding matches. The real app does further processing for each part, so the main loop can not be removed. If there is a need to pre-process the data, it should be done before the main loop. To standardize the approach, we'll use the following main function for all implementations.
 ```C
 static void run(const SourceData* data) {

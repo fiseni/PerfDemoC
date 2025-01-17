@@ -7,7 +7,7 @@
 #include "cross_platform_time.h"
 #include "processor.h"
 
-const char* processor_get_identifier() { return "Processor4"; }
+const char* processor_get_identifier() { return "Processor5"; }
 
 typedef struct PartsInfo {
     Part* parts;

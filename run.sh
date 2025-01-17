@@ -10,7 +10,7 @@ fi
 
 impl="$2"
 if [ "$impl" = "" ]; then
-  impl="4"
+  impl="5"
 fi
 
 FLAGS="-O3 -march=native -s -Wall -Wextra -Wno-unused-function"

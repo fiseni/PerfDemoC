@@ -33,7 +33,7 @@
     <ClCompile Include="processor1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="processor4.c">
+    <ClCompile Include="processor5.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source_data.c">

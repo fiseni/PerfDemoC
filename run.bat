@@ -11,7 +11,7 @@ if "%1"=="short" (
 
 set "impl=%2"
 if "%impl%"=="" (
-    set "impl=4"
+    set "impl=5"
 )
 
 :: Compilation flags

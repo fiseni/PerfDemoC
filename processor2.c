@@ -6,22 +6,22 @@
 #include "source_data.h"
 #include "processor.h"
 
-const char* processor_get_identifier() { return "Processor2"; }
+const char *processor_get_identifier() { return "Processor2"; }
 
-static int compare_mp_by_partNumber_length_asc(const void* a, const void* b);
-static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b);
-static void backward_fill(size_t* array);
-static void forward_fill(size_t* array);
+static int compare_mp_by_partNumber_length_asc(const void *a, const void *b);
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void *a, const void *b);
+static void backward_fill(size_t *array);
+static void forward_fill(size_t *array);
 
 static const size_t MAX_VALUE = ((size_t)-1);
-static MasterPart* masterPartsAsc = NULL;
-static MasterPart* masterPartsAscByNoHyphens = NULL;
+static MasterPart *masterPartsAsc = NULL;
+static MasterPart *masterPartsAscByNoHyphens = NULL;
 static size_t masterPartsCount = 0;
 static size_t startIndexByLengthAsc[MAX_STRING_LENGTH];
 static size_t startIndexByLengthAscNoHyphens[MAX_STRING_LENGTH];
 static size_t startIndexByLengthDesc[MAX_STRING_LENGTH];
 
-const char* processor_find_match(const char* partNumber) {
+const char *processor_find_match(const char *partNumber) {
 
     char buffer[MAX_STRING_LENGTH];
     size_t bufferLength;
@@ -63,14 +63,14 @@ const char* processor_find_match(const char* partNumber) {
     return NULL;
 }
 
-void processor_initialize(const SourceData* data) {
+void processor_initialize(const SourceData *data) {
     masterPartsCount = data->masterPartsCount;
-    masterPartsAsc = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAsc));
+    masterPartsAsc = (MasterPart *)malloc(masterPartsCount * sizeof(*masterPartsAsc));
     CHECK_ALLOC(masterPartsAsc);
     memcpy(masterPartsAsc, data->masterParts, masterPartsCount * sizeof(*masterPartsAsc));
     qsort(masterPartsAsc, masterPartsCount, sizeof(*masterPartsAsc), compare_mp_by_partNumber_length_asc);
 
-    masterPartsAscByNoHyphens = (MasterPart*)malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
+    masterPartsAscByNoHyphens = (MasterPart *)malloc(masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
     CHECK_ALLOC(masterPartsAscByNoHyphens);
     memcpy(masterPartsAscByNoHyphens, masterPartsAsc, masterPartsCount * sizeof(*masterPartsAscByNoHyphens));
     qsort(masterPartsAscByNoHyphens, masterPartsCount, sizeof(*masterPartsAscByNoHyphens), compare_mp_by_partNumberNoHyphens_length_asc);
@@ -111,7 +111,7 @@ void processor_clean() {
     }
 }
 
-static void backward_fill(size_t* array) {
+static void backward_fill(size_t *array) {
     size_t tmp = array[MAX_STRING_LENGTH - 1];
     for (long length = (long)MAX_STRING_LENGTH - 1; length >= 0; length--) {
         if (array[length] == MAX_VALUE) {
@@ -123,7 +123,7 @@ static void backward_fill(size_t* array) {
     }
 }
 
-static void forward_fill(size_t* array) {
+static void forward_fill(size_t *array) {
     size_t tmp = array[0];
     for (size_t length = 0; length < MAX_STRING_LENGTH; length++) {
         if (array[length] == MAX_VALUE) {
@@ -135,14 +135,14 @@ static void forward_fill(size_t* array) {
     }
 }
 
-static int compare_mp_by_partNumber_length_asc(const void* a, const void* b) {
-    size_t lenA = ((const MasterPart*)a)->partNumberLength;
-    size_t lenB = ((const MasterPart*)b)->partNumberLength;
+static int compare_mp_by_partNumber_length_asc(const void *a, const void *b) {
+    size_t lenA = ((const MasterPart *)a)->partNumberLength;
+    size_t lenB = ((const MasterPart *)b)->partNumberLength;
     return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
-static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b) {
-    size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
-    size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void *a, const void *b) {
+    size_t lenA = ((const MasterPart *)a)->partNumberNoHyphensLength;
+    size_t lenB = ((const MasterPart *)b)->partNumberNoHyphensLength;
     return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }

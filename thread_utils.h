@@ -28,17 +28,17 @@ typedef LPVOID thread_arg_t;
 // POSIX-specific includes and definitions
 #include <pthread.h>
 typedef pthread_t thread_t;
-typedef void* thread_ret_t;
-typedef void* thread_arg_t;
+typedef void *thread_ret_t;
+typedef void *thread_arg_t;
 #endif
 
 // Thread function signature
 typedef thread_ret_t(*thread_func_t)(thread_arg_t);
 
 // Thread creation function
-int create_thread(thread_t* thread, thread_func_t func, thread_arg_t arg);
+int create_thread(thread_t *thread, thread_func_t func, thread_arg_t arg);
 
 // Thread join function
-int join_thread(thread_t thread, thread_ret_t* ret);
+int join_thread(thread_t thread, thread_ret_t *ret);
 
 #endif

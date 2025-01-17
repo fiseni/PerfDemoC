@@ -6,11 +6,11 @@
 #include "processor.h"
 #include "utils.h"
 
-static void export_test_data(const char* masterPartsFile, const char* partFile);
+static void export_test_data(const char *masterPartsFile, const char *partFile);
 
 typedef struct TestPart {
-    char* expected;
-    char* partNumber;
+    char *expected;
+    char *partNumber;
 } TestPart;
 
 TestPart testParts[] =
@@ -44,7 +44,7 @@ TestPart testParts[] =
     {"XSSD-DFF", "XSSDDFF"},
 };
 
-char* testMasterPartNumbers[] =
+char *testMasterPartNumbers[] =
 {
     "699",
     "Aqwertyuio",
@@ -69,16 +69,16 @@ char* testMasterPartNumbers[] =
 };
 
 void run_tests() {
-    char* partsFile = "data/partsTest.txt";
-    char* masterPartFile = "data/masterPartsTest.txt";
+    char *partsFile = "data/partsTest.txt";
+    char *masterPartFile = "data/masterPartsTest.txt";
     export_test_data(masterPartFile, partsFile);
 
-    const SourceData* data = source_data_read(masterPartFile, partsFile);
+    const SourceData *data = source_data_read(masterPartFile, partsFile);
     processor_initialize(data);
 
     size_t testPartsCount = sizeof(testParts) / sizeof(testParts[0]);
     for (size_t i = 0; i < testPartsCount; i++) {
-        const char* result = processor_find_match(testParts[i].partNumber);
+        const char *result = processor_find_match(testParts[i].partNumber);
 
         if (result == NULL && testParts[i].expected == NULL) {
             continue;
@@ -96,17 +96,17 @@ void run_tests() {
 }
 
 // We're exporting to a file to mimic the entire process.
-static void export_test_data(const char* masterPartsFile, const char* partFile) {
+static void export_test_data(const char *masterPartsFile, const char *partFile) {
     size_t testMasterPartNumbersCount = sizeof(testMasterPartNumbers) / sizeof(testMasterPartNumbers[0]);
     size_t testPartsCount = sizeof(testParts) / sizeof(testParts[0]);
-    char** testPartNumbers = malloc(testPartsCount * sizeof(*testPartNumbers));
+    char **testPartNumbers = malloc(testPartsCount * sizeof(*testPartNumbers));
     CHECK_ALLOC(testPartNumbers);
     for (size_t i = 0; i < testPartsCount; i++) {
         testPartNumbers[i] = testParts[i].partNumber;
     };
 
-    FILE* file1 = fopen(masterPartsFile, "w");
-    FILE* file2 = fopen(partFile, "w");
+    FILE *file1 = fopen(masterPartsFile, "w");
+    FILE *file2 = fopen(partFile, "w");
     if (!file1 || !file2) {
         perror("Failed to open files");
         return;

@@ -9,25 +9,25 @@
 #define MIN_STRING_LENGTH ((size_t)3)
 
 typedef struct MasterPart {
-    const char* partNumber;
-    const char* partNumberNoHyphens;
+    const char *partNumber;
+    const char *partNumberNoHyphens;
     size_t partNumberLength;
     size_t partNumberNoHyphensLength;
 } MasterPart;
 
 typedef struct Part {
-    const char* partNumber;
+    const char *partNumber;
     size_t partNumberLength;
 } Part;
 
 typedef struct SourceData {
-    const MasterPart* masterParts;
+    const MasterPart *masterParts;
     size_t masterPartsCount;
-    const Part* parts;
+    const Part *parts;
     size_t partsCount;
 } SourceData;
 
-const SourceData* source_data_read(const char* masterPartsFilename, const char* partsFilename);
-void source_data_clean(const SourceData* data);
+const SourceData *source_data_read(const char *masterPartsFilename, const char *partsFilename);
+void source_data_clean(const SourceData *data);
 
 #endif

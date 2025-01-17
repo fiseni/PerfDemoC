@@ -7,45 +7,45 @@
 #include "cross_platform_time.h"
 #include "processor.h"
 
-const char* processor_get_identifier() { return "Processor5"; }
+const char *processor_get_identifier() { return "Processor5"; }
 
 typedef struct PartsInfo {
-    Part* parts;
+    Part *parts;
     size_t partsCount;
-    HTableSizeList* suffixesByLength[MAX_STRING_LENGTH];
+    HTableSizeList *suffixesByLength[MAX_STRING_LENGTH];
 } PartsInfo;
 
 typedef struct MasterPartsInfo {
-    MasterPart* masterParts;
-    MasterPart* masterPartsNoHyphens;
+    MasterPart *masterParts;
+    MasterPart *masterPartsNoHyphens;
     size_t masterPartsCount;
     size_t masterPartsNoHyphensCount;
-    HTableString* suffixesByLength[MAX_STRING_LENGTH];
-    HTableString* suffixesByNoHyphensLength[MAX_STRING_LENGTH];
+    HTableString *suffixesByLength[MAX_STRING_LENGTH];
+    HTableString *suffixesByNoHyphensLength[MAX_STRING_LENGTH];
 } MasterPartsInfo;
 
 typedef struct ThreadArgs {
-    void* info;
+    void *info;
     size_t startIndex;
     size_t suffixLength;
 } ThreadArgs;
 
-static void build_masterPartsInfo(const SourceData* data, MasterPartsInfo* mpInfo);
-static void build_partsInfo(const SourceData* data, PartsInfo* partsInfo);
+static void build_masterPartsInfo(const SourceData *data, MasterPartsInfo *mpInfo);
+static void build_partsInfo(const SourceData *data, PartsInfo *partsInfo);
 static thread_ret_t create_suffix_table_for_mp_PartNumber(thread_arg_t arg);
 static thread_ret_t create_suffix_table_for_mp_PartNumberNoHyphens(thread_arg_t arg);
 static thread_ret_t create_suffix_table_for_part_PartNumber(thread_arg_t arg);
 static void free_info_allocations(MasterPartsInfo masterPartsInfo, PartsInfo partsInfo);
-static int compare_mp_by_partNumber_length_asc(const void* a, const void* b);
-static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b);
-static int compare_part_by_partNumber_length_asc(const void* a, const void* b);
-static void backward_fill(size_t* array);
+static int compare_mp_by_partNumber_length_asc(const void *a, const void *b);
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void *a, const void *b);
+static int compare_part_by_partNumber_length_asc(const void *a, const void *b);
+static void backward_fill(size_t *array);
 
 static const size_t MAX_VALUE = ((size_t)-1);
-static char* block = NULL;
-static HTableString* dictionary = NULL;
+static char *block = NULL;
+static HTableString *dictionary = NULL;
 
-const char* processor_find_match(const char* partNumber) {
+const char *processor_find_match(const char *partNumber) {
 
     char buffer[MAX_STRING_LENGTH];
     size_t bufferLength;
@@ -54,13 +54,13 @@ const char* processor_find_match(const char* partNumber) {
         return NULL;
     }
 
-    const char* match = htable_string_search(dictionary, buffer, bufferLength);
+    const char *match = htable_string_search(dictionary, buffer, bufferLength);
     return match;
 }
 
 
 
-void processor_initialize(const SourceData* data) {
+void processor_initialize(const SourceData *data) {
     MasterPartsInfo masterPartsInfo = { 0 };
     build_masterPartsInfo(data, &masterPartsInfo);
     PartsInfo partsInfo = { 0 };
@@ -71,16 +71,16 @@ void processor_initialize(const SourceData* data) {
     for (size_t i = 0; i < partsInfo.partsCount; i++) {
         Part part = partsInfo.parts[i];
 
-        HTableString* masterPartsBySuffix = masterPartsInfo.suffixesByLength[part.partNumberLength];
+        HTableString *masterPartsBySuffix = masterPartsInfo.suffixesByLength[part.partNumberLength];
         if (masterPartsBySuffix) {
-            const char* match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
+            const char *match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
             if (match) {
                 htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
             }
         }
         masterPartsBySuffix = masterPartsInfo.suffixesByNoHyphensLength[part.partNumberLength];
         if (masterPartsBySuffix) {
-            const char* match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
+            const char *match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
             if (match) {
                 htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
             }
@@ -89,9 +89,9 @@ void processor_initialize(const SourceData* data) {
 
     for (long i = (long)masterPartsInfo.masterPartsCount - 1; i >= 0; i--) {
         MasterPart mp = masterPartsInfo.masterParts[i];
-        HTableSizeList* partsBySuffix = partsInfo.suffixesByLength[mp.partNumberLength];
+        HTableSizeList *partsBySuffix = partsInfo.suffixesByLength[mp.partNumberLength];
         if (partsBySuffix) {
-            const ListItem* originalParts = htable_sizelist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
+            const ListItem *originalParts = htable_sizelist_search(partsBySuffix, mp.partNumber, mp.partNumberLength);
             while (originalParts) {
                 size_t originalPartIndex = originalParts->value;
                 Part part = partsInfo.parts[originalPartIndex];
@@ -129,16 +129,16 @@ void processor_clean() {
     htable_string_free(dictionary);
 }
 
-static void build_masterPartsInfo(const SourceData* data, MasterPartsInfo* mpInfo) {
+static void build_masterPartsInfo(const SourceData *data, MasterPartsInfo *mpInfo) {
     // Build masterParts
     size_t masterPartsCount = data->masterPartsCount;
-    MasterPart* masterParts = malloc(masterPartsCount * sizeof(*masterParts));
+    MasterPart *masterParts = malloc(masterPartsCount * sizeof(*masterParts));
     CHECK_ALLOC(masterParts);
     memcpy(masterParts, data->masterParts, masterPartsCount * sizeof(*masterParts));
     qsort(masterParts, masterPartsCount, sizeof(*masterParts), compare_mp_by_partNumber_length_asc);
 
     // Build masterPartsNoHyphens
-    MasterPart* masterPartsNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsNoHyphens));
+    MasterPart *masterPartsNoHyphens = malloc(masterPartsCount * sizeof(*masterPartsNoHyphens));
     CHECK_ALLOC(masterPartsNoHyphens);
     size_t masterPartsNoHyphensCount = 0;
     for (size_t i = 0; i < masterPartsCount; i++) {
@@ -216,19 +216,19 @@ static void build_masterPartsInfo(const SourceData* data, MasterPartsInfo* mpInf
 }
 
 static thread_ret_t create_suffix_table_for_mp_PartNumber(thread_arg_t arg) {
-    ThreadArgs* args = (ThreadArgs*)arg;
-    MasterPartsInfo* mpInfo = args->info;
+    ThreadArgs *args = (ThreadArgs *)arg;
+    MasterPartsInfo *mpInfo = args->info;
     size_t startIndex = args->startIndex;
     size_t suffixLength = args->suffixLength;
 
-    HTableString* table = NULL;
-    MasterPart* masterParts = mpInfo->masterParts;
+    HTableString *table = NULL;
+    MasterPart *masterParts = mpInfo->masterParts;
     size_t masterPartsCount = mpInfo->masterPartsCount;
 
     table = htable_string_create(masterPartsCount);
     for (size_t i = startIndex; i < masterPartsCount; i++) {
         MasterPart mp = masterParts[i];
-        const char* suffix = mp.partNumber + (mp.partNumberLength - suffixLength);
+        const char *suffix = mp.partNumber + (mp.partNumberLength - suffixLength);
         htable_string_insert_if_not_exists(table, suffix, suffixLength, mp.partNumber);
     }
     mpInfo->suffixesByLength[suffixLength] = table;
@@ -236,27 +236,27 @@ static thread_ret_t create_suffix_table_for_mp_PartNumber(thread_arg_t arg) {
 }
 
 static thread_ret_t create_suffix_table_for_mp_PartNumberNoHyphens(thread_arg_t arg) {
-    ThreadArgs* args = (ThreadArgs*)arg;
-    MasterPartsInfo* mpInfo = args->info;
+    ThreadArgs *args = (ThreadArgs *)arg;
+    MasterPartsInfo *mpInfo = args->info;
     size_t startIndex = args->startIndex;
     size_t suffixLength = args->suffixLength;
 
-    HTableString* table = NULL;
-    MasterPart* masterPartsNoHyphens = mpInfo->masterPartsNoHyphens;
+    HTableString *table = NULL;
+    MasterPart *masterPartsNoHyphens = mpInfo->masterPartsNoHyphens;
     size_t masterPartsNoHyphensCount = mpInfo->masterPartsNoHyphensCount;
 
     table = htable_string_create(masterPartsNoHyphensCount);
     for (size_t i = startIndex; i < masterPartsNoHyphensCount; i++) {
         MasterPart mp = masterPartsNoHyphens[i];
-        const char* suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - suffixLength);
+        const char *suffix = mp.partNumberNoHyphens + (mp.partNumberNoHyphensLength - suffixLength);
         htable_string_insert_if_not_exists(table, suffix, suffixLength, mp.partNumber);
     }
     mpInfo->suffixesByNoHyphensLength[suffixLength] = table;
     return 0;
 }
 
-static void build_partsInfo(const SourceData* data, PartsInfo* partsInfo) {
-    const Part* inputParts = data->parts;
+static void build_partsInfo(const SourceData *data, PartsInfo *partsInfo) {
+    const Part *inputParts = data->parts;
     size_t inputPartsCount = data->partsCount;
 
     // Allocate block memory for strings
@@ -266,11 +266,11 @@ static void build_partsInfo(const SourceData* data, PartsInfo* partsInfo) {
     CHECK_ALLOC(block);
 
     // Build parts
-    Part* parts = malloc(sizeof(*parts) * inputPartsCount);
+    Part *parts = malloc(sizeof(*parts) * inputPartsCount);
     CHECK_ALLOC(parts);
     size_t partsCount = 0;
     for (size_t i = 0; i < inputPartsCount; i++) {
-        const char* src = inputParts[i].partNumber;
+        const char *src = inputParts[i].partNumber;
         size_t stringLength;
         str_to_upper_trim(src, &block[blockIndex], MAX_STRING_LENGTH, &stringLength);
 
@@ -322,26 +322,26 @@ static void build_partsInfo(const SourceData* data, PartsInfo* partsInfo) {
 }
 
 static thread_ret_t create_suffix_table_for_part_PartNumber(thread_arg_t arg) {
-    ThreadArgs* args = (ThreadArgs*)arg;
-    PartsInfo* partsInfo = args->info;
+    ThreadArgs *args = (ThreadArgs *)arg;
+    PartsInfo *partsInfo = args->info;
     size_t startIndex = args->startIndex;
     size_t suffixLength = args->suffixLength;
 
-    HTableSizeList* table = NULL;
-    Part* parts = partsInfo->parts;
+    HTableSizeList *table = NULL;
+    Part *parts = partsInfo->parts;
     size_t partsCount = partsInfo->partsCount;
 
     table = htable_sizelist_create(partsCount);
     for (size_t i = startIndex; i < partsCount; i++) {
         Part part = parts[i];
-        const char* suffix = part.partNumber + (part.partNumberLength - suffixLength);
+        const char *suffix = part.partNumber + (part.partNumberLength - suffixLength);
         htable_sizelist_add(table, suffix, suffixLength, i);
     }
     partsInfo->suffixesByLength[suffixLength] = table;
     return 0;
 }
 
-static void backward_fill(size_t* array) {
+static void backward_fill(size_t *array) {
     size_t tmp = array[MAX_STRING_LENGTH - 1];
     for (long length = (long)MAX_STRING_LENGTH - 1; length >= 0; length--) {
         if (array[length] == MAX_VALUE) {
@@ -353,20 +353,20 @@ static void backward_fill(size_t* array) {
     }
 }
 
-static int compare_mp_by_partNumber_length_asc(const void* a, const void* b) {
-    size_t lenA = ((const MasterPart*)a)->partNumberLength;
-    size_t lenB = ((const MasterPart*)b)->partNumberLength;
+static int compare_mp_by_partNumber_length_asc(const void *a, const void *b) {
+    size_t lenA = ((const MasterPart *)a)->partNumberLength;
+    size_t lenB = ((const MasterPart *)b)->partNumberLength;
     return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
-static int compare_mp_by_partNumberNoHyphens_length_asc(const void* a, const void* b) {
-    size_t lenA = ((const MasterPart*)a)->partNumberNoHyphensLength;
-    size_t lenB = ((const MasterPart*)b)->partNumberNoHyphensLength;
+static int compare_mp_by_partNumberNoHyphens_length_asc(const void *a, const void *b) {
+    size_t lenA = ((const MasterPart *)a)->partNumberNoHyphensLength;
+    size_t lenB = ((const MasterPart *)b)->partNumberNoHyphensLength;
     return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }
 
-static int compare_part_by_partNumber_length_asc(const void* a, const void* b) {
-    size_t lenA = ((const Part*)a)->partNumberLength;
-    size_t lenB = ((const Part*)b)->partNumberLength;
+static int compare_part_by_partNumber_length_asc(const void *a, const void *b) {
+    size_t lenA = ((const Part *)a)->partNumberLength;
+    size_t lenB = ((const Part *)b)->partNumberLength;
     return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
 }

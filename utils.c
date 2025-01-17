@@ -13,7 +13,7 @@
 * They're tailored for our scenario and they're safe to use only within this context.
 */
 
-bool str_contains_dash(const char* str, size_t strLength) {
+bool str_contains_dash(const char *str, size_t strLength) {
     assert(str);
 
     for (size_t i = 0; i < strLength; i++) {
@@ -24,7 +24,7 @@ bool str_contains_dash(const char* str, size_t strLength) {
     return false;
 }
 
-bool str_equals_same_length(const char* s1, const char* s2, size_t length) {
+bool str_equals_same_length(const char *s1, const char *s2, size_t length) {
     assert(s1);
     assert(s2);
 
@@ -36,7 +36,7 @@ bool str_equals_same_length(const char* s1, const char* s2, size_t length) {
     return true;
 }
 
-bool str_equals_same_length_vectorized(const char* s1, const char* s2, size_t length) {
+bool str_equals_same_length_vectorized(const char *s1, const char *s2, size_t length) {
     assert(s1);
     assert(s2);
 
@@ -62,8 +62,8 @@ bool str_equals_same_length_vectorized(const char* s1, const char* s2, size_t le
     // Process 16 bytes at a time using SSE2
     for (; i + 15 < length; i += 16) {
         // Load 16 bytes from each string (unaligned load)
-        __m128i chunk1 = _mm_loadu_si128((const __m128i*)(s1 + i));
-        __m128i chunk2 = _mm_loadu_si128((const __m128i*)(s2 + i));
+        __m128i chunk1 = _mm_loadu_si128((const __m128i *)(s1 + i));
+        __m128i chunk2 = _mm_loadu_si128((const __m128i *)(s2 + i));
 
         __m128i cmp = _mm_cmpeq_epi8(chunk1, chunk2);
         int mask = _mm_movemask_epi8(cmp);
@@ -83,33 +83,33 @@ bool str_equals_same_length_vectorized(const char* s1, const char* s2, size_t le
     return true;
 }
 
-bool str_is_suffix(const char* value, size_t valueLength, const char* source, size_t sourceLength) {
+bool str_is_suffix(const char *value, size_t valueLength, const char *source, size_t sourceLength) {
     assert(value);
     assert(source);
 
     if (valueLength > sourceLength) {
         return false;
     }
-    const char* endOfSource = source + (sourceLength - valueLength);
+    const char *endOfSource = source + (sourceLength - valueLength);
     //return (strcmp(endOfSource, value) == 0);
     return (memcmp(endOfSource, value, valueLength) == 0);
 }
 
-bool str_is_suffix_vectorized(const char* value, size_t valueLength, const char* source, size_t sourceLength) {
+bool str_is_suffix_vectorized(const char *value, size_t valueLength, const char *source, size_t sourceLength) {
     assert(value);
     assert(source);
 
     if (valueLength > sourceLength) {
         return false;
     }
-    const char* endOfSource = source + (sourceLength - valueLength);
+    const char *endOfSource = source + (sourceLength - valueLength);
 
     // For our use-case most of the time the strings are not equal.
     // It turns out checking the first char before vectorization improves the performance.
     return (endOfSource[0] == value[0] && str_equals_same_length_vectorized(endOfSource, value, valueLength));
 }
 
-void str_to_upper_trim(const char* src, char* buffer, size_t bufferSize, size_t* outBufferLength) {
+void str_to_upper_trim(const char *src, char *buffer, size_t bufferSize, size_t *outBufferLength) {
     assert(src);
     assert(buffer);
     assert(outBufferLength);
@@ -130,7 +130,7 @@ void str_to_upper_trim(const char* src, char* buffer, size_t bufferSize, size_t*
     *outBufferLength = j;
 }
 
-void str_to_upper_trim_in_place(char* src, size_t length, size_t* outLength) {
+void str_to_upper_trim_in_place(char *src, size_t length, size_t *outLength) {
     assert(src);
     assert(outLength);
 
@@ -160,7 +160,7 @@ void str_to_upper_trim_in_place(char* src, size_t length, size_t* outLength) {
     *outLength = j;
 }
 
-void str_remove_char(const char* src, size_t srcLength, char* buffer, size_t bufferSize, char find, size_t* outBufferLength) {
+void str_remove_char(const char *src, size_t srcLength, char *buffer, size_t bufferSize, char find, size_t *outBufferLength) {
     assert(src);
     assert(buffer);
     assert(outBufferLength);
@@ -211,7 +211,7 @@ size_t next_power_of_two(size_t n) {
     return n;
 }
 
-long get_file_size_bytes(const char* filename) {
+long get_file_size_bytes(const char *filename) {
     assert(filename);
 
     struct stat st;

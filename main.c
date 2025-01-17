@@ -7,12 +7,12 @@
 #include "processor.h"
 
 typedef struct Args {
-    char* masterPartsFilename;
-    char* partsFilename;
+    char *masterPartsFilename;
+    char *partsFilename;
     int isTestRun;
 } Args;
 
-static void run(const SourceData* data) {
+static void run(const SourceData *data) {
     double start = time_get_seconds();
     processor_initialize(data);
     printf("Processor initialization: \t%f seconds.\n", time_get_seconds() - start);
@@ -29,7 +29,7 @@ static void run(const SourceData* data) {
     processor_clean();
 }
 
-static Args parse_arguments(int argc, char* argv[]) {
+static Args parse_arguments(int argc, char *argv[]) {
 #if _DEBUG
     //return (Args) { "data/masterPartsTest.txt", "data/partsTest.txt", 0 };
     //return (Args) { "data/masterParts.txt", "data/parts.txt", 0 };
@@ -46,7 +46,7 @@ static Args parse_arguments(int argc, char* argv[]) {
     return (Args) { argv[1], argv[2], 0 };
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     Args args = parse_arguments(argc, argv);
     printf("\nImplementation: %s\n\n", processor_get_identifier());
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     }
 
     double start = time_get_seconds();
-    const SourceData* data = source_data_read(args.masterPartsFilename, args.partsFilename);
+    const SourceData *data = source_data_read(args.masterPartsFilename, args.partsFilename);
     printf("MasterParts Count: \t%zu\n", data->masterPartsCount);
     printf("Parts Count: \t\t%zu\n\n", data->partsCount);
     printf("Reading source data: \t\t%f seconds.\n", time_get_seconds() - start);

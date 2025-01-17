@@ -7,17 +7,17 @@
 #include "cross_platform_time.h"
 #include "source_data.h"
 
-static Part* build_parts(const char* partsPath, size_t* outCount);
-static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCount);
-static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t partNumberLength, char* block, size_t blockSize, size_t* blockIndexNoHyphens);
+static Part *build_parts(const char *partsPath, size_t *outCount);
+static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCount);
+static bool populate_masterPart(MasterPart *masterPart, char *partNumber, size_t partNumberLength, char *block, size_t blockSize, size_t *blockIndexNoHyphens);
 
-const SourceData* source_data_read(const char* masterPartsPath, const char* partsPath) {
+const SourceData *source_data_read(const char *masterPartsPath, const char *partsPath) {
     size_t masterPartsCount = 0;
-    MasterPart* masterParts = build_masterParts(masterPartsPath, &masterPartsCount);
+    MasterPart *masterParts = build_masterParts(masterPartsPath, &masterPartsCount);
     size_t partsCount = 0;
-    Part* parts = build_parts(partsPath, &partsCount);
+    Part *parts = build_parts(partsPath, &partsCount);
 
-    SourceData* data = (SourceData*)malloc(sizeof(*data));
+    SourceData *data = (SourceData *)malloc(sizeof(*data));
     CHECK_ALLOC(data);
     data->masterParts = masterParts;
     data->masterPartsCount = masterPartsCount;
@@ -27,19 +27,19 @@ const SourceData* source_data_read(const char* masterPartsPath, const char* part
     return data;
 }
 
-void source_data_clean(const SourceData* data) {
+void source_data_clean(const SourceData *data) {
     // All strings are allocated from a single block
-    free((void*)data->masterParts->partNumber);
-    free((void*)data->parts->partNumber);
+    free((void *)data->masterParts->partNumber);
+    free((void *)data->parts->partNumber);
 
-    free((void*)data->masterParts);
-    free((void*)data->parts);
-    free((void*)data);
+    free((void *)data->masterParts);
+    free((void *)data->parts);
+    free((void *)data);
 }
 
-static Part* build_parts(const char* partsPath, size_t* outCount) {
+static Part *build_parts(const char *partsPath, size_t *outCount) {
     long fileSize = get_file_size_bytes(partsPath);
-    FILE* file = fopen(partsPath, "r");
+    FILE *file = fopen(partsPath, "r");
     if (!file || fileSize == -1) {
         fprintf(stderr, "Failed to open parts file: %s\n", partsPath);
         exit(EXIT_FAILURE);
@@ -47,14 +47,14 @@ static Part* build_parts(const char* partsPath, size_t* outCount) {
 
     size_t blockIndex = 0;
     size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize;
-    char* block = malloc(blockSize);
+    char *block = malloc(blockSize);
     CHECK_ALLOC(block);
 
     size_t lineCount = 0;
     size_t bytes_read;
     size_t bufferSize = 65536 < fileSize ? 65536 : fileSize;
 
-    char* buffer = &block[blockIndex];
+    char *buffer = &block[blockIndex];
     while ((bytes_read = fread(buffer, 1, bufferSize, file)) > 0) {
         for (size_t i = 0; i < bytes_read; ++i) {
             if (buffer[i] == '\n') {
@@ -77,7 +77,7 @@ static Part* build_parts(const char* partsPath, size_t* outCount) {
         blockIndex++;
     }
 
-    Part* parts = malloc(lineCount * sizeof(*parts));
+    Part *parts = malloc(lineCount * sizeof(*parts));
     CHECK_ALLOC(parts);
 
     size_t stringStartIndex = 0;
@@ -104,9 +104,9 @@ static Part* build_parts(const char* partsPath, size_t* outCount) {
     return parts;
 }
 
-static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCount) {
+static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCount) {
     long fileSize = get_file_size_bytes(masterPartsPath);
-    FILE* file = fopen(masterPartsPath, "r");
+    FILE *file = fopen(masterPartsPath, "r");
     if (!file || fileSize == -1) {
         fprintf(stderr, "Failed to open file: %s\n", masterPartsPath);
         exit(EXIT_FAILURE);
@@ -114,14 +114,14 @@ static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCou
 
     size_t blockIndex = 0;
     size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize * 2;
-    char* block = malloc(blockSize);
+    char *block = malloc(blockSize);
     CHECK_ALLOC(block);
 
     size_t lineCount = 0;
     size_t bytes_read;
     size_t bufferSize = 65536 < fileSize ? 65536 : fileSize;
 
-    char* buffer = &block[blockIndex];
+    char *buffer = &block[blockIndex];
     while ((bytes_read = fread(buffer, 1, bufferSize, file)) > 0) {
         for (size_t i = 0; i < bytes_read; ++i) {
             if (buffer[i] == '\n') {
@@ -144,7 +144,7 @@ static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCou
         blockIndex++;
     }
 
-    MasterPart* masterParts = malloc(lineCount * sizeof(*masterParts));
+    MasterPart *masterParts = malloc(lineCount * sizeof(*masterParts));
     CHECK_ALLOC(masterParts);
 
     size_t stringStartIndex = 0;
@@ -174,7 +174,7 @@ static MasterPart* build_masterParts(const char* masterPartsPath, size_t* outCou
     return masterParts;
 }
 
-static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t partNumberLength, char* block, size_t blockSize, size_t* blockIndexNoHyphens) {
+static bool populate_masterPart(MasterPart *masterPart, char *partNumber, size_t partNumberLength, char *block, size_t blockSize, size_t *blockIndexNoHyphens) {
     if (partNumberLength < MIN_STRING_LENGTH) {
         return false;
     }
@@ -194,7 +194,7 @@ static bool populate_masterPart(MasterPart* masterPart, char* partNumber, size_t
             exit(EXIT_FAILURE);
         }
 
-        char* partNumberNoHyphens = &block[*blockIndexNoHyphens];
+        char *partNumberNoHyphens = &block[*blockIndexNoHyphens];
         size_t partNumberNoHyphensLength;
         str_remove_char(partNumber, partNumberLength, partNumberNoHyphens, partNumberLength, '-', &partNumberNoHyphensLength);
         masterPart->partNumberNoHyphens = partNumberNoHyphens;

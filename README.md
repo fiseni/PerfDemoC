@@ -44,21 +44,21 @@ For a provided `SourceData` (shown below), we should find a match for each `Part
 
 ```C
 typedef struct MasterPart {
-    const char* partNumber;
-    const char* partNumberNoHyphens;
+    const char *partNumber;
+    const char *partNumberNoHyphens;
     size_t partNumberLength;
     size_t partNumberNoHyphensLength;
 } MasterPart;
 
 typedef struct Part {
-    const char* partNumber;
+    const char *partNumber;
     size_t partNumberLength;
 } Part;
 
 typedef struct SourceData {
-    const MasterPart* masterParts;
+    const MasterPart *masterParts;
     size_t masterPartsCount;
-    const Part* parts;
+    const Part *parts;
     size_t partsCount;
 } SourceData;
 ```
@@ -77,7 +77,7 @@ typedef struct SourceData {
 - There is no limit on memory usage, as long as it is freed up once the processing is done.
 - This challenge is focused only on finding matches. The real app does further processing for each part, so the main loop can not be removed. If there is a need to pre-process the data, it should be done before the main loop. To standardize the approach, we'll use the following main function for all implementations.
 ```C
-static void run(const SourceData* data) {
+static void run(const SourceData *data) {
     
     processor_initialize(data);
 
@@ -99,8 +99,8 @@ The original implementation is [processor1](https://github.com/fiseni/PerfDemoC/
 If you wish to participate in the challenge, create a new processor implementation with your suffix `processorSUFFIX.c` and implement the `processor.h` contract.
 
 ```C
-const char* processor_get_identifier();
-const char* processor_find_match(const char* partNumber);
-void processor_initialize(const SourceData* data);
+const char *processor_get_identifier();
+const char *processor_find_match(const char *partNumber);
+void processor_initialize(const SourceData *data);
 void processor_clean();
 ```

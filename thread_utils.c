@@ -11,14 +11,14 @@ typedef struct {
 
 // Windows thread procedure
 static DWORD WINAPI thread_proc(LPVOID param) {
-    thread_wrapper_t* wrapper = (thread_wrapper_t*)param;
+    thread_wrapper_t *wrapper = (thread_wrapper_t *)param;
     wrapper->func(wrapper->arg);
     free(wrapper);
     return 0;
 }
 
-int create_thread(thread_t* thread, thread_func_t func, thread_arg_t arg) {
-    thread_wrapper_t* wrapper = malloc(sizeof(thread_wrapper_t));
+int create_thread(thread_t *thread, thread_func_t func, thread_arg_t arg) {
+    thread_wrapper_t *wrapper = malloc(sizeof(thread_wrapper_t));
     if (!wrapper) return -1;
     wrapper->func = func;
     wrapper->arg = arg;
@@ -37,7 +37,7 @@ int create_thread(thread_t* thread, thread_func_t func, thread_arg_t arg) {
     return 0;
 }
 
-int join_thread(thread_t thread, thread_ret_t* ret) {
+int join_thread(thread_t thread, thread_ret_t *ret) {
     WaitForSingleObject(thread, INFINITE);
     if (ret) {
         DWORD exit_code;
@@ -51,11 +51,11 @@ int join_thread(thread_t thread, thread_ret_t* ret) {
 
 #else
 
-int create_thread(thread_t* thread, thread_func_t func, thread_arg_t arg) {
+int create_thread(thread_t *thread, thread_func_t func, thread_arg_t arg) {
     return pthread_create(thread, NULL, func, arg);
 }
 
-int join_thread(thread_t thread, thread_ret_t* ret) {
+int join_thread(thread_t thread, thread_ret_t *ret) {
     return pthread_join(thread, ret);
 }
 

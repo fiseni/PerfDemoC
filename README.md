@@ -39,8 +39,9 @@ For a provided `SourceData` (shown below), we should find a match for each `Part
 - Find and return `MasterPart.partNumber` where the current `Part.partNumber` is a suffix to `MasterPart.partNumber`.
 - If not found, find and return `MasterPart.partNumber` where the current `Part.partNumber` is a suffix to `MasterPart.partNumberNoHyphens`.
 - If not found, apply the opposite logic, find and return `MasterPart.partNumber` where `MasterPart.partNumber` is a suffix to the current `Part.partNumber`.
-- All comparisons should be case-insensitive.
+- The matches are case-insensitive.
 - Find the best matches; an equal string, then a string with +1 length, and so on.
+- If there is more than one match with the same length, you may return any of them.
 
 ```C
 typedef struct MasterPart {

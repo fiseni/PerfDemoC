@@ -100,6 +100,8 @@ The original implementation written in C# completes the execution in 42 minutes 
 
 The optimized implementation completes in just ~0.21 seconds. That's more than 10,000 times faster.
 
+For the C# version, I've been using a more sophisticated benchmarking tool. It provides statistically accurate execution times. As shown below, here I'm measuring the time in a very rudimentary way. There are no warm-up phases, it's just a cold start. I'll be happy if anyone can contribute here and improve the benchmarking process.
+
 ![Benchmark2](https://github.com/user-attachments/assets/8e30d3b3-5fa3-4628-b30c-0617f071962c)
 
 ## Contributions

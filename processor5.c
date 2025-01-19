@@ -58,8 +58,6 @@ const char *processor_find_match(const char *partNumber) {
     return match;
 }
 
-
-
 void processor_initialize(const SourceData *data) {
     MasterPartsInfo masterPartsInfo = { 0 };
     build_masterPartsInfo(data, &masterPartsInfo);
@@ -76,6 +74,7 @@ void processor_initialize(const SourceData *data) {
             const char *match = htable_string_search(masterPartsBySuffix, part.partNumber, part.partNumberLength);
             if (match) {
                 htable_string_insert_if_not_exists(dictionary, part.partNumber, part.partNumberLength, match);
+                continue;
             }
         }
         masterPartsBySuffix = masterPartsInfo.suffixesByNoHyphensLength[part.partNumberLength];

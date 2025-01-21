@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <assert.h>
 #include "utils.h"
 #include "cross_platform_time.h"
 #include "source_data.h"
@@ -62,12 +61,6 @@ static Part *build_parts(const char *partsPath, size_t *outCount) {
             }
         }
         blockIndex += bytes_read;
-        if (blockIndex + bufferSize > blockSize) {
-            fprintf(stderr, "Buffer overflow detected while reading parts.\n");
-            free(block);
-            fclose(file);
-            exit(EXIT_FAILURE);
-        }
         buffer = &block[blockIndex];
     }
     // Handle the case where the last line might not end with a newline
@@ -129,12 +122,6 @@ static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCou
             }
         }
         blockIndex += bytes_read;
-        if (blockIndex + bufferSize > blockSize) {
-            fprintf(stderr, "Buffer overflow detected while reading masterParts.\n");
-            free(block);
-            fclose(file);
-            exit(EXIT_FAILURE);
-        }
         buffer = &block[blockIndex];
     }
     // Handle the case where the last line might not end with a newline

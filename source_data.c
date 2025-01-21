@@ -46,7 +46,7 @@ static Part *build_parts(const char *partsPath, size_t *outCount) {
     }
 
     size_t blockIndex = 0;
-    size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize;
+    size_t blockSize = sizeof(char) * fileSize;
     char *block = malloc(blockSize);
     CHECK_ALLOC(block);
 
@@ -113,7 +113,7 @@ static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCou
     }
 
     size_t blockIndex = 0;
-    size_t blockSize = sizeof(char) * MAX_STRING_LENGTH * fileSize * 2;
+    size_t blockSize = sizeof(char) * fileSize * 2;
     char *block = malloc(blockSize);
     CHECK_ALLOC(block);
 

@@ -63,6 +63,8 @@ static Part *build_parts(const char *partsPath, size_t *outCount) {
         blockIndex += bytes_read;
         buffer = &block[blockIndex];
     }
+    fclose(file);
+
     // Handle the case where the last line might not end with a newline
     if (blockIndex > 0 && block[blockIndex - 1] != '\n') {
         lineCount++;
@@ -78,21 +80,18 @@ static Part *build_parts(const char *partsPath, size_t *outCount) {
     for (size_t i = 0; i < blockIndex; i++) {
         if (block[i] == '\n') {
             block[i] = '\0';
+            size_t length = i - stringStartIndex;
+            if (i > 0 && block[i - 1] == '\r') {
+                block[i - 1] = '\0';
+                length = length - 1;
+            }
             parts[partsIndex].partNumber = &block[stringStartIndex];
-            parts[partsIndex].partNumberLength = i - stringStartIndex;
+            parts[partsIndex].partNumberLength = length;
             partsIndex++;
             stringStartIndex = i + 1;
         }
     }
 
-    // Handle the last line if it doesn't end with a newline
-    if (stringStartIndex < blockIndex) {
-        parts[partsIndex].partNumber = &block[stringStartIndex];
-        parts[partsIndex].partNumberLength = blockIndex - stringStartIndex;
-        partsIndex++;
-    }
-
-    fclose(file);
     *outCount = partsIndex;
     return parts;
 }
@@ -124,6 +123,8 @@ static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCou
         blockIndex += bytes_read;
         buffer = &block[blockIndex];
     }
+    fclose(file);
+
     // Handle the case where the last line might not end with a newline
     if (blockIndex > 0 && block[blockIndex - 1] != '\n') {
         lineCount++;
@@ -141,6 +142,10 @@ static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCou
         if (block[i] == '\n') {
             block[i] = '\0';
             size_t length = i - stringStartIndex;
+            if (i > 0 && block[i - 1] == '\r') {
+                block[i - 1] = '\0';
+                length = length - 1;
+            }
             if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length, block, blockSize, &blockIndexNoHyphens)) {
                 masterPartsIndex++;
             }
@@ -148,15 +153,6 @@ static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCou
         }
     }
 
-    // Handle the last line if it doesn't end with a newline
-    if (stringStartIndex < blockIndex) {
-        size_t length = blockIndex - stringStartIndex;
-        if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length, block, blockSize, &blockIndexNoHyphens)) {
-            masterPartsIndex++;
-        }
-    }
-
-    fclose(file);
     *outCount = masterPartsIndex;
     return masterParts;
 }

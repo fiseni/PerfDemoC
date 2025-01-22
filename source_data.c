@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 #include "utils.h"
 #include "cross_platform_time.h"
 #include "source_data.h"
@@ -38,53 +39,43 @@ void source_data_clean(const SourceData *data) {
 
 static Part *build_parts(const char *partsPath, size_t *outCount) {
     long fileSize = get_file_size_bytes(partsPath);
-    FILE *file = fopen(partsPath, "r");
+    FILE *file = fopen(partsPath, "rb");
     if (!file || fileSize == -1) {
         fprintf(stderr, "Failed to open parts file: %s\n", partsPath);
         exit(EXIT_FAILURE);
     }
 
-    size_t blockIndex = 0;
-    size_t blockSize = sizeof(char) * fileSize;
+    size_t blockSize = sizeof(char) * fileSize + 1;
     char *block = malloc(blockSize);
     CHECK_ALLOC(block);
-
-    size_t lineCount = 0;
-    size_t bytes_read;
-    size_t bufferSize = 65536 < fileSize ? 65536 : fileSize;
-
-    char *buffer = &block[blockIndex];
-    while ((bytes_read = fread(buffer, 1, bufferSize, file)) > 0) {
-        for (size_t i = 0; i < bytes_read; ++i) {
-            if (buffer[i] == '\n') {
-                lineCount++;
-            }
-        }
-        blockIndex += bytes_read;
-        buffer = &block[blockIndex];
-    }
+    size_t contentSize = fread(block, 1, fileSize, file);
     fclose(file);
 
-    // Handle the case where the last line might not end with a newline
-    if (blockIndex > 0 && block[blockIndex - 1] != '\n') {
-        lineCount++;
-        block[blockIndex] = '\n';
-        blockIndex++;
+    if (contentSize > 0 && block[contentSize - 1] != '\n') {
+        block[contentSize] = '\n';
+        contentSize++;
     }
 
+    size_t lineCount = 0;
+    for (size_t i = 0; i < contentSize; i++) {
+        if (block[i] == '\n') {
+            lineCount++;
+        }
+    }
     Part *parts = malloc(lineCount * sizeof(*parts));
     CHECK_ALLOC(parts);
 
     size_t stringStartIndex = 0;
     size_t partsIndex = 0;
-    for (size_t i = 0; i < blockIndex; i++) {
+    for (size_t i = 0; i < contentSize; i++) {
         if (block[i] == '\n') {
             block[i] = '\0';
             size_t length = i - stringStartIndex;
             if (i > 0 && block[i - 1] == '\r') {
                 block[i - 1] = '\0';
-                length = length - 1;
+                length--;
             }
+            assert(partsIndex < lineCount);
             parts[partsIndex].partNumber = &block[stringStartIndex];
             parts[partsIndex].partNumberLength = length;
             partsIndex++;
@@ -98,54 +89,44 @@ static Part *build_parts(const char *partsPath, size_t *outCount) {
 
 static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCount) {
     long fileSize = get_file_size_bytes(masterPartsPath);
-    FILE *file = fopen(masterPartsPath, "r");
+    FILE *file = fopen(masterPartsPath, "rb");
     if (!file || fileSize == -1) {
         fprintf(stderr, "Failed to open file: %s\n", masterPartsPath);
         exit(EXIT_FAILURE);
     }
 
-    size_t blockIndex = 0;
-    size_t blockSize = sizeof(char) * fileSize * 2;
+    size_t blockSize = sizeof(char) * fileSize * 2 + 2;
     char *block = malloc(blockSize);
     CHECK_ALLOC(block);
-
-    size_t lineCount = 0;
-    size_t bytes_read;
-    size_t bufferSize = 65536 < fileSize ? 65536 : fileSize;
-
-    char *buffer = &block[blockIndex];
-    while ((bytes_read = fread(buffer, 1, bufferSize, file)) > 0) {
-        for (size_t i = 0; i < bytes_read; ++i) {
-            if (buffer[i] == '\n') {
-                lineCount++;
-            }
-        }
-        blockIndex += bytes_read;
-        buffer = &block[blockIndex];
-    }
+    size_t contentSize = fread(block, 1, fileSize, file);
     fclose(file);
 
-    // Handle the case where the last line might not end with a newline
-    if (blockIndex > 0 && block[blockIndex - 1] != '\n') {
-        lineCount++;
-        block[blockIndex] = '\n';
-        blockIndex++;
+    if (contentSize > 0 && block[contentSize - 1] != '\n') {
+        block[contentSize] = '\n';
+        contentSize++;
     }
 
+    size_t lineCount = 0;
+    for (size_t i = 0; i < contentSize; i++) {
+        if (block[i] == '\n') {
+            lineCount++;
+        }
+    }
     MasterPart *masterParts = malloc(lineCount * sizeof(*masterParts));
     CHECK_ALLOC(masterParts);
 
     size_t stringStartIndex = 0;
     size_t masterPartsIndex = 0;
-    size_t blockIndexNoHyphens = blockIndex;
-    for (size_t i = 0; i < blockIndex; i++) {
+    size_t blockIndexNoHyphens = contentSize;
+    for (size_t i = 0; i < contentSize; i++) {
         if (block[i] == '\n') {
             block[i] = '\0';
             size_t length = i - stringStartIndex;
             if (i > 0 && block[i - 1] == '\r') {
                 block[i - 1] = '\0';
-                length = length - 1;
+                length--;
             }
+            assert(masterPartsIndex < lineCount);
             if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length, block, blockSize, &blockIndexNoHyphens)) {
                 masterPartsIndex++;
             }

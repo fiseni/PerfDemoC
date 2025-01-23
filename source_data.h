@@ -13,11 +13,13 @@ typedef struct MasterPart {
     const char *partNumberNoHyphens;
     size_t partNumberLength;
     size_t partNumberNoHyphensLength;
+    size_t index;
 } MasterPart;
 
 typedef struct Part {
     const char *partNumber;
     size_t partNumberLength;
+    size_t index;
 } Part;
 
 typedef struct SourceData {

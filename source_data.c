@@ -9,7 +9,7 @@
 
 static Part *build_parts(const char *partsPath, size_t *outCount);
 static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCount);
-static bool populate_masterPart(MasterPart *masterPart, char *partNumber, size_t partNumberLength, char *block, size_t blockSize, size_t *blockIndexNoHyphens);
+static bool populate_masterPart(MasterPart *masterPart, size_t masterPartsIndex, char *partNumber, size_t partNumberLength, char *block, size_t blockSize, size_t *blockIndexNoHyphens);
 
 const SourceData *source_data_read(const char *masterPartsPath, const char *partsPath) {
     size_t masterPartsCount = 0;
@@ -78,6 +78,7 @@ static Part *build_parts(const char *partsPath, size_t *outCount) {
             assert(partsIndex < lineCount);
             parts[partsIndex].partNumber = &block[stringStartIndex];
             parts[partsIndex].partNumberLength = length;
+            parts[partsIndex].index = partsIndex;
             partsIndex++;
             stringStartIndex = i + 1;
         }
@@ -127,7 +128,7 @@ static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCou
                 length--;
             }
             assert(masterPartsIndex < lineCount);
-            if (populate_masterPart(&masterParts[masterPartsIndex], &block[stringStartIndex], length, block, blockSize, &blockIndexNoHyphens)) {
+            if (populate_masterPart(&masterParts[masterPartsIndex], masterPartsIndex, &block[stringStartIndex], length, block, blockSize, &blockIndexNoHyphens)) {
                 masterPartsIndex++;
             }
             stringStartIndex = i + 1;
@@ -138,7 +139,7 @@ static MasterPart *build_masterParts(const char *masterPartsPath, size_t *outCou
     return masterParts;
 }
 
-static bool populate_masterPart(MasterPart *masterPart, char *partNumber, size_t partNumberLength, char *block, size_t blockSize, size_t *blockIndexNoHyphens) {
+static bool populate_masterPart(MasterPart *masterPart, size_t masterPartsIndex, char *partNumber, size_t partNumberLength, char *block, size_t blockSize, size_t *blockIndexNoHyphens) {
     if (partNumberLength < MIN_STRING_LENGTH) {
         return false;
     }
@@ -150,6 +151,7 @@ static bool populate_masterPart(MasterPart *masterPart, char *partNumber, size_t
 
     masterPart->partNumber = partNumber;
     masterPart->partNumberLength = partNumberLength;
+    masterPart->index = masterPartsIndex;
 
     if (str_contains_dash(partNumber, partNumberLength)) {
         // Ensure there is enough space in the block for partNumberNoHyphens

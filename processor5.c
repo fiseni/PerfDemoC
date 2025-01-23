@@ -353,19 +353,25 @@ static void backward_fill(size_t *array) {
 }
 
 static int compare_mp_by_partNumber_length_asc(const void *a, const void *b) {
-    size_t lenA = ((const MasterPart *)a)->partNumberLength;
-    size_t lenB = ((const MasterPart *)b)->partNumberLength;
-    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+    const MasterPart *mpA = (const MasterPart *)a;
+    const MasterPart *mpB = (const MasterPart *)b;
+    return (mpA->partNumberLength < mpB->partNumberLength) ? -1
+        : (mpA->partNumberLength > mpB->partNumberLength) ? 1
+        : (mpA->index < mpB->index) ? -1 : (mpA->index > mpB->index) ? 1 : 0;
 }
 
 static int compare_mp_by_partNumberNoHyphens_length_asc(const void *a, const void *b) {
-    size_t lenA = ((const MasterPart *)a)->partNumberNoHyphensLength;
-    size_t lenB = ((const MasterPart *)b)->partNumberNoHyphensLength;
-    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+    const MasterPart *mpA = (const MasterPart *)a;
+    const MasterPart *mpB = (const MasterPart *)b;
+    return (mpA->partNumberNoHyphensLength < mpB->partNumberNoHyphensLength) ? -1
+        : (mpA->partNumberNoHyphensLength > mpB->partNumberNoHyphensLength) ? 1
+        : (mpA->index < mpB->index) ? -1 : (mpA->index > mpB->index) ? 1 : 0;
 }
 
 static int compare_part_by_partNumber_length_asc(const void *a, const void *b) {
-    size_t lenA = ((const Part *)a)->partNumberLength;
-    size_t lenB = ((const Part *)b)->partNumberLength;
-    return lenA < lenB ? -1 : lenA > lenB ? 1 : 0;
+    const Part *pA = (const Part *)a;
+    const Part *pB = (const Part *)b;
+    return (pA->partNumberLength < pB->partNumberLength) ? -1
+        : (pA->partNumberLength > pB->partNumberLength) ? 1
+        : (pA->index < pB->index) ? -1 : (pA->index > pB->index) ? 1 : 0;
 }

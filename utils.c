@@ -172,6 +172,34 @@ void str_to_upper_trim_in_place(char *src, size_t length, size_t *outLength) {
     *outLength = j;
 }
 
+void str_trim_in_place(char *src) {
+    assert(src);
+
+    // We know the chars are ASCII (no need to cast to unaligned char)
+
+    size_t length = strlen(src);
+    size_t start = 0;
+    while (start < length && isspace(src[start])) {
+        start++;
+    }
+
+    if (start == length) {
+        src[0] = '\0';
+        return;
+    }
+
+    size_t end = length - 1;
+    while (end > start && isspace(src[end])) {
+        end--;
+    }
+
+    size_t j = 0;
+    for (size_t i = start; i <= end; i++) {
+        src[j++] = src[i];
+    }
+    src[j] = '\0';
+}
+
 void str_remove_char(const char *src, size_t srcLength, char *buffer, size_t bufferSize, char find, size_t *outBufferLength) {
     assert(src);
     assert(buffer);

@@ -24,6 +24,7 @@ bool str_is_suffix(const char *value, size_t valueLength, const char *source, si
 bool str_is_suffix_vectorized(const char *value, size_t valueLength, const char *source, size_t sourceLength);
 void str_to_upper_trim(const char *src, char *buffer, size_t bufferSize, size_t *outBufferLength);
 void str_to_upper_trim_in_place(char *src, size_t length, size_t *outLength);
+void str_trim_in_place(char *src);
 void str_remove_char(const char *src, size_t srcLength, char *buffer, size_t bufferSize, char find, size_t *outBufferLength);
 
 bool is_power_of_two(size_t n);
